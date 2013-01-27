@@ -1,3 +1,6 @@
+import var
+import pygame
+from pygame.locals import *
 """
 @author: MARIN Jordy, ROZE Nicolas
 """
@@ -19,6 +22,8 @@ class ANDGate(Gate):
 	def __init__(self, entranceA, entranceB):
 		Gate.__init__(self, entranceA, entranceB)
 		self.sortieS = entranceA & entranceB
+
+		self.imgGate = var.img_ANDGate
 
 	def __str__(self):
 		self.sortieS = self.entranceA & self.entranceB
