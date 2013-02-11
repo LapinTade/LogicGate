@@ -1,5 +1,5 @@
 from path import path
 
-img_path = path('../images')
+IMG_PATH = path('../images').realpath()
 
-img_ANDGate = img_path / 'andGate.png'
+IMG_ANDGATE = IMG_PATH / 'andGate.png'
