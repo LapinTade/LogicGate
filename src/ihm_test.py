@@ -6,10 +6,16 @@ import sys; sys.path.insert(0, "..")
 
 from pgu import gui
 
-app = gui.App()
+app = gui.Desktop()
+app.connect(gui.QUIT, app.quit, None)
 
-e = gui.Button("Kikoo")
+c = gui.Table(width=800,height=600)
 
-app.connect(gui.QUIT, app.quit)
+def cb():
+	print 'lol'
+btn = gui.Button('LOL?')
+btn.connect(gui.CLICK, cb)
 
-app.run(e) 
+c.add(btn,0,0)
+
+app.run(c)
