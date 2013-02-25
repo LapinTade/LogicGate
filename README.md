@@ -11,5 +11,6 @@ Path:
 
 pgu:
 https://code.google.com/p/pgu/downloads/list < derniere version 0.18
+
 Dans le dossier de pgu
 > sudo python setup.py install
