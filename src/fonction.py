@@ -59,7 +59,7 @@ class BoolNot(BoolOperand):
         return not v
 
 def decompose(expr):
-  regex = re.compile('\((\w+)\s+(and|or|not)\s+(\w)\)|(\w+)')
+	regex = re.compile('\((\w+)\s+(and|or|and\s+not|or\s+not)\s+(\w)\)|(\w+)|not(\w)')
 	results = regex.findall(expr)
 	results = [i[:3] if i[0] else i[3] for i in results]
 	return results
@@ -276,6 +276,85 @@ def addapt(s):
   
    return j
 
+#Fonction qui retourne un dictionnaire contenant les portes utilisees.
+
+def comptePorte(l):
+	i = 0
+	j = 0
+	portes = {}
+	portes["or"]=0
+	portes["and"]=0
+	portes["not"]=0
+	for i in range(0, len(l) ):
+           for j in range(0, len(l[i]) ):
+           		if(l[i][j]=='or'):
+           			portes["or"]+=1
+           		elif(l[i][j]=='and'):
+           			portes["and"]+=1
+           		elif(l[i][j]=='and not'):
+					portes["and"]+=1
+					portes["not"]+=1
+           		elif(l[i][j]=='or not'):
+ 					portes["or"]+=1
+					portes["not"]+=1          			
+           if(l[i]=='and'):
+           		portes["and"]+=1
+           elif(l[i]=='or'):
+           		portes["or"]+=1
+           elif(l[i]=='not'):
+           		portes["not"]+=1
+	print "Portes utilisees : " + str(portes) + "\n"
+	return portes
+
+#Fonction qui renvoit les entrees utilisees dans l'expression.
+
+def donneEntree(l):
+	i = 0
+	j = 0
+	t = 0
+	test=""
+	testsec=""
+	entree=[]
+	dejaVu=False
+	for i in range(0, len(l) ):
+		for j in range(0, len(l[i]) ):
+			if(l[i][j]=='a' or l[i][j]=='o' or l[i][j]=='n'):
+				try :
+					test=l[i][j]+l[i][j+1]
+					testsec=l[i][j]+l[i][j+1]+l[i][j+2]
+				except Exception:
+					None
+				if(test!='or' and testsec!='and' and testsec!='not'):
+					for t in range(0, len(entree)):
+						if(l[i][j]==entree[t]):
+							dejaVu=True
+					if(dejaVu==False):
+						entree.append(l[i][j])
+						dejaVu=False
+			elif(l[i][j]!='or' and l[i][j]!='and' and l[i][j]!='and not' and l[i][j]!='or not'):
+				try :
+					test=l[i][j-1]+l[i][j]
+					testsec=l[i][j-2]+l[i][j-1]+l[i][j]
+				except Exception:
+					dejaVu=False
+					for t in range(0, len(entree)):
+						if(l[i][j]==entree[t]):
+							dejaVu=True
+					if(dejaVu==False):
+						entree.append(l[i][j])
+						dejaVu=False
+				if(test!='or' and testsec!='and' and testsec!='not'):
+					dejaVu=False
+					for t in range(0, len(entree)):
+						if(l[i][j]==entree[t]):
+							dejaVu=True
+					if(dejaVu==False):
+						entree.append(l[i][j])
+						dejaVu=False
+	print "Entrees : " + str(entree) + "\n"
+	return entree
+	
+	
 choix=raw_input("Calcul de la valeur de l'expression(1), decomposition de l'expression(2) : ");
 
 if(choix=='1'):
@@ -288,11 +367,12 @@ if(choix=='1'):
 	
 if(choix=='2'):
 	temps = []
-	expr = '(q and not r and q) and r'
+	expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+	#expr = '(a and not r) and b'
 	test = calculValeur(expr)
 	exprBool=decompose(expr)
+	print("\n"+str(exprBool)+"\n")
+	comptePorte(exprBool)
+	donneEntree(exprBool)
 	#ordreGraphique(str(test))
-	expression = addapt(str(test))
-	
-	print expression[1:len(expression)-1]
-	affiche(expression[1:len(expression)-1])	
+	#expression = addapt(str(test))
