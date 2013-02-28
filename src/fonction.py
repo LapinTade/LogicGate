@@ -1,17 +1,3 @@
-#
-# simpleBool.py
-#
-# Example of defining a boolean logic parser using
-# the operatorGrammar helper method in pyparsing.
-#
-# In this example, parse actions associated with each
-# operator expression will "compile" the expression
-# into BoolOperand subclass objects, which can then
-# later be evaluated for their boolean value.
-#
-# Copyright 2006, by Paul McGuire
-#
-
 from pyparsing import *
 import re
 
@@ -286,23 +272,23 @@ def comptePorte(l):
 	portes["and"]=0
 	portes["not"]=0
 	for i in range(0, len(l) ):
-           for j in range(0, len(l[i]) ):
-           		if(l[i][j]=='or'):
-           			portes["or"]+=1
-           		elif(l[i][j]=='and'):
-           			portes["and"]+=1
-           		elif(l[i][j]=='and not'):
+		for j in range(0, len(l[i]) ):
+				if(l[i][j]=='or'):
+					portes["or"]+=1
+				elif(l[i][j]=='and'):
+					portes["and"]+=1
+				elif(l[i][j]=='and not'):
 					portes["and"]+=1
 					portes["not"]+=1
-           		elif(l[i][j]=='or not'):
- 					portes["or"]+=1
+				elif(l[i][j]=='or not'):
+					portes["or"]+=1
 					portes["not"]+=1          			
-           if(l[i]=='and'):
-           		portes["and"]+=1
-           elif(l[i]=='or'):
-           		portes["or"]+=1
-           elif(l[i]=='not'):
-           		portes["not"]+=1
+		if(l[i]=='and'):
+			portes["and"]+=1
+		elif(l[i]=='or'):
+			portes["or"]+=1
+		elif(l[i]=='not'):
+			portes["not"]+=1
 	print "Portes utilisees : " + str(portes) + "\n"
 	return portes
 
@@ -353,26 +339,85 @@ def donneEntree(l):
 						dejaVu=False
 	print "Entrees : " + str(entree) + "\n"
 	return entree
-	
+
+#fonction composition. Retourne un tableau contenant les portes à créer.
+
+def composition(l):
+	tab=[]
+	i = 0
+	j = 0
+	nombreInsertion=0
+	temp = str(l[0])+" "+str(l[1])
+	expr=decompose(str(l[0]))
+	tab.append(l[0])
+	tab.append(temp)
+	#print len(l)
+	porte=[]
+	while i<len(l):
+		if(len(str(l[i]))==1):
+			try :
+				if(l[i+2]=="not"):
+					porte.append(l[i]+","+l[i+1]+","+l[i+2]+" "+l[i+3])
+					nombreInsertion+=1
+				else:
+					porte.append(l[i]+","+l[i+1]+","+l[i+2])
+					nombreInsertion+=1
+					i+=2
+			except Exception :
+				None
+		if(len(str(l[i]))==2 or len(str(l[i]))==3):
+			if(l[i]=="and" or l[i]=="or"):
+				if(l[i+1]=='not' and len(str(l[i+2]))==1):
+					porte.append("porte["+str(nombreInsertion-1)+"],"+l[i]+","+l[i+1]+" "+l[i+2])
+					nombreInsertion+=1
+				elif(len(str(l[i+1]))>1):
+					porte.append("porte["+str(nombreInsertion-1)+"],"+l[i]+",porte["+str(nombreInsertion+1)+"]")
+					nombreInsertion+=1
+				else:
+					porte.append("porte["+str(nombreInsertion-1)+"],"+l[i]+","+l[i+1])
+					nombreInsertion+=1
+		#for j in range(0, len(l[i]) ):
+		#	print ""
+		elif(len(str(l[i]))>3):
+			porte.append(l[i])
+			nombreInsertion+=1
+		i+=1
+	for j in range(0, len(porte) ):
+		try:	
+			porte[j]=porte[j].split(',')
+		except Exception:
+			None
+	#print porte
+	return porte
 	
 choix=raw_input("Calcul de la valeur de l'expression(1), decomposition de l'expression(2) : ");
 
 if(choix=='1'):
-	expr = "( p and not q and q) and q"
+	expr = "p and q"
 	valeurBool = calculValeur(expr)
-	p = True
-	q = True
-	r = True
-	print expr,'\n', valeurBool, '=', bool(valeurBool),'\n'
+	test=decompose(expr)
+	entree=donneEntree(test)
+	#p = True
+	#q = False
+	#r = True
+	dic = {}
+	dic["q"]=True
+	dic["p"]=True
+	print entree
+	str(valeurBool).replace(entree[0],dic["q"])
+	#print expr,'\n', valeurBool, '=', bool(valeurBool),'\n'
 	
 if(choix=='2'):
 	temps = []
-	expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+	#expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+	expr = 'a and b or ((a and b) or (c and d))'
 	#expr = '(a and not r) and b'
+	#expr = 'a or b and not b'
 	test = calculValeur(expr)
 	exprBool=decompose(expr)
 	print("\n"+str(exprBool)+"\n")
 	comptePorte(exprBool)
 	donneEntree(exprBool)
+	composition(exprBool)
 	#ordreGraphique(str(test))
 	#expression = addapt(str(test))
