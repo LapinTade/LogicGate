@@ -5,11 +5,39 @@ import sys, random
 
 #@TODO Faire des fichiers séparé par classe :p
 
-class Gate(QtGui.QGraphicsItem):
+#TEST
+class MySquare(QtGui.QGraphicsItem):
     def __init__(self, parent=None):
-        print "test"
-        # On va essayer de faire des item personnalisé, on pourra les drag and drop etc...
-
+        super(MySquare, self).__init__(parent)
+        self.pressed = False
+        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+    
+    #@Override
+    def boundingRect(self):
+        return QtCore.QRectF(0,0,100,100)
+    
+    def paint(self, painter, option, parent=None):
+        rec = self.boundingRect();
+        brush = QtGui.QBrush(QtGui.QColor("blue"))
+        
+        if self.pressed:
+            brush.setColor(QtGui.QColor("red"))
+        else:
+            brush.setColor(QtGui.QColor("green"))
+        
+        painter.fillRect(rec, brush)
+        painter.drawRect(rec)
+    
+    def mousePressEvent(self, event):
+        self.pressed = True
+        self.update()
+        QtGui.QGraphicsItem.mousePressEvent(self,event)
+    
+    def mouseReleaseEvent(self, event):
+        self.pressed = False
+        self.update()
+        QtGui.QGraphicsItem.mouseReleaseEvent(self,event)
+#TEST
 
 class Plan(QtGui.QGraphicsView):
     def __init__(self, parent=None):
@@ -25,6 +53,10 @@ class Plan(QtGui.QGraphicsView):
 
         self.setScene(self.scene)
         self.scene.setSceneRect(0,0,780,500)
+
+        self.square = MySquare()
+        self.scene.addItem(self.square)
+
         self.show()
 
 
