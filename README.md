@@ -12,13 +12,6 @@ Path:
 
 apt-get install qt4-designer qt4-doc python-qt4 python-qt4-doc pyqt4-dev-tools
 
-On abandonne pgu et pygame.
-pgu:
-https://code.google.com/p/pgu/downloads/list < derniere version 0.18
-
-Dans le dossier de pgu
-> sudo python setup.py install
-
 Exemple de résultat retourner pour ma fonction composition pour l'expression : 
 ((a or not r) and (a or b)) and (a or not r) or not(x and y)
 
