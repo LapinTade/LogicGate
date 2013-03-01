@@ -18,3 +18,15 @@ https://code.google.com/p/pgu/downloads/list < derniere version 0.18
 
 Dans le dossier de pgu
 > sudo python setup.py install
+
+Exemple de résultat retourner pour ma fonction composition pour l'expression : 
+((a or not r) and (a or b)) and (a or not r) or not(x and y)
+
+Résultat :
+porte = 
+[['a', 'or', 'not r'], ['porte[0]', 'and', 'porte[2]'], 
+['a', 'or', 'b'], ['porte[2]', 'and', 'porte[4]'], 
+['a', 'or', 'not r'], ['porte[4]', 'or', 'porte[6]'], 
+['x', 'and', 'y']]
+
+Des remarques ?
