@@ -1,35 +1,33 @@
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui, QtOpenGL
 
 import sys, random
 
-class Plan(QtGui.QWidget):
+#@TODO Faire des fichiers séparé par classe :p
 
+class Gate(QtGui.QGraphicsItem):
+    def __init__(self, parent=None):
+        print "test"
+        # On va essayer de faire des item personnalisé, on pourra les drag and drop etc...
+
+
+class Plan(QtGui.QGraphicsView):
     def __init__(self, parent=None):
         super(Plan, self).__init__(parent)
         self.setStyleSheet("background-color:white;")
-        self.show()
         self.setAutoFillBackground(True)
 
-    def paintEvent(self, event):
-        qp = QtGui.QPainter()
-        qp.begin(self)
-        qp.setRenderHint(QtGui.QPainter.Antialiasing)
-        #self.drawPoints(qp)
-        self.drawAndGate(qp,50,50,2)
-        qp.end()
+        self.setRenderHint(QtGui.QPainter.Antialiasing)
 
-    def drawPoints(self, qp):
-        qp.setPen(QtCore.Qt.red)
-        size = self.size()
+        self.scene = QtGui.QGraphicsScene()
 
-        for i in range(1000):
-            x = random.randint(1, size.width()-1)
-            y = random.randint(1, size.height()-1)
-            qp.drawPoint(x, y)
-    def drawAndGate(self, qp, x, y,scale=1,h=20,w=20):
-        qp.setPen(QtCore.Qt.black)
-        size = self.size()
+        self.drawAndGate(50,50)
 
+        self.setScene(self.scene)
+        self.scene.setSceneRect(0,0,780,500)
+        self.show()
+
+
+    def drawAndGate(self,x,y,scale=1,h=20,w=20):
         h_size = h * scale
         dh_size = (h_size/2)
         w_size = w * scale
@@ -37,11 +35,27 @@ class Plan(QtGui.QWidget):
         startAngle = 90 * 16
         endAngle = -180 * 16
 
-        qp.drawLine(x,y,x+h_size,y)
-        qp.drawLine(x,y,x,y+w_size)
-        qp.drawLine(x+h_size,y+w_size,x,y+w_size)
-        qp.drawArc(x+dh_size,y,h_size,w_size,startAngle,endAngle)
-        qp.drawText(x+dh_size,y+dw_size,"&")
+        self.drawLine(x,y,x+h_size,y)
+        self.drawLine(x,y,x,y+w_size)
+        self.drawLine(x+h_size,y+w_size,x,y+w_size)
+        self.drawArc(x+dh_size,y,h_size,w_size,startAngle,endAngle)
+        self.drawText(x,y-3,"&")
+
+    def drawLine(self,x1,y1,x2,y2):
+        line=QtGui.QGraphicsLineItem(x1,y1,x2,y2)
+        self.scene.addItem(line)
+
+    def drawArc(self,x,y,height,width,startAngle,endAngle):
+        arc=QtGui.QGraphicsEllipseItem(x,y,height,width)
+        arc.setStartAngle(startAngle)
+        arc.setSpanAngle(endAngle)
+        self.scene.addItem(arc)
+
+    def drawText(self,x,y,string):
+        txt = QtGui.QGraphicsTextItem(string)
+        txt.setPos(x,y)
+        self.scene.addItem(txt)
+
 
 class Ui_MainWindow(object):
     def setupUi(self, LogicGate):
@@ -64,7 +78,7 @@ class Ui_MainWindow(object):
         self.exprBool.setGeometry(QtCore.QRect(0, 522, 400, 30))
         self.exprBool.setObjectName("exprBool")
 
-        self.pushButton_2 = QtGui.QPushButton(self.centralwidget)
+        """self.pushButton_2 = QtGui.QPushButton(self.centralwidget)
         self.pushButton_2.setGeometry(QtCore.QRect(780, 501, 20, 20))
         self.pushButton_2.setObjectName("pushButton_2")
 
@@ -85,11 +99,11 @@ class Ui_MainWindow(object):
         self.verticalScrollBar.setProperty("value", 0)
         self.verticalScrollBar.setSliderPosition(0)
         self.verticalScrollBar.setOrientation(QtCore.Qt.Vertical)
-        self.verticalScrollBar.setObjectName("verticalScrollBar")
+        self.verticalScrollBar.setObjectName("verticalScrollBar")"""
 
         self.plan = Plan(self.centralwidget)
-        self.plan.setFixedSize(780,500)        
-        self.plan.setGeometry(QtCore.QRect(0, 0, 780, 500))
+        self.plan.setFixedSize(800,520)        
+        #self.plan.setGeometry(QtCore.QRect(0, 0, 780, 500))
         self.plan.setObjectName("plan")
 
         LogicGate.setCentralWidget(self.centralwidget)
@@ -144,8 +158,8 @@ class Ui_MainWindow(object):
         LogicGate.setWindowTitle(QtGui.QApplication.translate("LogicGate", "LogicGate", None, QtGui.QApplication.UnicodeUTF8))
         self.infoLabel.setText(QtGui.QApplication.translate("LogicGate", "Current expression: None", None, QtGui.QApplication.UnicodeUTF8))
         self.analyse.setText(QtGui.QApplication.translate("LogicGate", "Analyse !", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_2.setText(QtGui.QApplication.translate("LogicGate", "+", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_3.setText(QtGui.QApplication.translate("LogicGate", "-", None, QtGui.QApplication.UnicodeUTF8))
+        #self.pushButton_2.setText(QtGui.QApplication.translate("LogicGate", "+", None, QtGui.QApplication.UnicodeUTF8))
+        #self.pushButton_3.setText(QtGui.QApplication.translate("LogicGate", "-", None, QtGui.QApplication.UnicodeUTF8))
         self.menuFile.setTitle(QtGui.QApplication.translate("LogicGate", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.menu.setTitle(QtGui.QApplication.translate("LogicGate", "?", None, QtGui.QApplication.UnicodeUTF8))
         self.menuAnalysis.setTitle(QtGui.QApplication.translate("LogicGate", "Analysis", None, QtGui.QApplication.UnicodeUTF8))
