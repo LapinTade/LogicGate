@@ -23,3 +23,4 @@ porte =
 ['x', 'and', 'y']]
 
 Des remarques ?
+Modifier la dernière occurence pour que le or not(x and y) se transforme en or(x nand y)
