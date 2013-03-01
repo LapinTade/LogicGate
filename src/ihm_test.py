@@ -57,6 +57,7 @@ class Plan(QtGui.QGraphicsView):
         self.square = MySquare()
         self.scene.addItem(self.square)
 
+        #self.scale(2,2)
         self.show()
 
 
