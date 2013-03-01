@@ -154,12 +154,7 @@ def compteAnd(expr):
 				if(appelAnd == True):
 					compteAnd(temp)
 				if(appelAnd == False):
-					print("\t\t"+temp)
-			#if(expr[i-1]!=')'):
-				#if(expr[i-2]=='~' and expr[i):
-				#	print("\t\t"+expr[i-2]+expr[i-1])
-				#if(expr[i-2]!=expr[i-1] and expr[i-2]!='&' and expr[i-1]!=')'):
-				#	print "\t\t"+expr[i-1]		
+					print("\t\t"+temp)	
 			print("\t"+expr[i])
 			if(expr[i+1]=='('):
 				compt=i+2
@@ -188,42 +183,6 @@ def affiche(expr):
 	decal = ""
 	appelAnd = False
 	while i<len(expr):
-		'''if(expr[i]=='&'):
-			if(expr[i-1]==')'):
-				compt=i-2
-				temp=""
-				while expr[compt]!=')':
-					if(expr[compt] == '&'):
-						appelAnd = True
-					temp+= expr[compt]
-					compt-=1
-				if(appelAnd == True):
-					compteAnd(temp)
-				if(appelAnd == False):
-					print("\t"+temp)
-			if(expr[i-1]!=')'):
-				print("\t"+expr[i-1])
-			else :
-				print(expr[i])
-				if(expr[i+1]=='('):
-					compt=i+2
-					temp=""
-					while expr[compt]!=')':
-						if(expr[compt] =='&'):
-							appelAnd = True
-						temp+= expr[compt]
-						compt+=1
-					if(appelAnd == True):
-						compteAnd(temp)
-					if(appelAnd == False):
-						print("\t"+temp)
-				if(expr[i+1]!='('):
-					if(expr[i+1]=='~'):
-						print("\t"+expr[i+1]+" "+expr[i+2])
-					else:
-						print("\t"+expr[i+1])
-			appelAnd=False
-		i+=1'''
 		if(expr[i]=='('):
 			while(expr[i]!=')'):
 				if(expr[i] =='&'):
@@ -254,7 +213,6 @@ def affiche(expr):
 					print('&\n\t'+expr[i+1])		
 		appelAnd=False
 		i+=1
-	
 	
 def addapt(s):
    j=""
@@ -341,8 +299,6 @@ def donneEntree(l):
 	print "Entrees : " + str(entree) + "\n"
 	return entree
 
-#fonction composition. Retourne un tableau contenant les portes à créer.
-
 def composition(l):
 	tab=[]
 	i = 0
@@ -352,7 +308,6 @@ def composition(l):
 	expr=decompose(str(l[0]))
 	tab.append(l[0])
 	tab.append(temp)
-	#print len(l)
 	porte=[]
 	while i<len(l):
 		if(len(str(l[i]))==1):
@@ -377,8 +332,6 @@ def composition(l):
 				else:
 					porte.append("porte["+str(nombreInsertion-1)+"],"+l[i]+","+l[i+1])
 					nombreInsertion+=1
-		#for j in range(0, len(l[i]) ):
-		#	print ""
 		elif(len(str(l[i]))>3):
 			porte.append(l[i])
 			nombreInsertion+=1
@@ -388,9 +341,33 @@ def composition(l):
 			porte[j]=porte[j].split(',')
 		except Exception:
 			None
-	#print porte
-	return porte
+	portes=remiseEnForme(porte)
+	return portes
 	
+def remiseEnForme(l):
+	porte=[]
+	i = 0
+	for i in range(0, len(l)):
+		tempVar=""
+		if(l[i][1]=='and not'):
+			temp=list(l[i])
+			temp[1]='and'
+			tempVar=temp[2]
+			temp[2]='not '+temp[2]
+			porte.append(temp)
+		elif(l[i][1]=='or not'):
+			temp=list(l[i])
+			temp[1]='or'
+			tempVar=temp[2]
+			temp[2]='not '+temp[2]
+			porte.append(temp)
+		elif(l[i][1]=='or' or l[i][1]=='and'):
+			temp=list(l[i])
+			porte.append(temp)
+		else:
+			porte.append(l[i])
+	return porte	
+		
 choix=raw_input("Calcul de la valeur de l'expression(1), decomposition de l'expression(2) : ");
 
 if(choix=='1'):
@@ -410,8 +387,8 @@ if(choix=='1'):
 	
 if(choix=='2'):
 	temps = []
-	#expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
-	expr = 'a and b or ((a and b) or (c and d))'
+	expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+	#expr = 'a and b or ((a and b) or (c and d))'
 	#expr = '(a and not r) and b'
 	#expr = 'a or b and not b'
 	test = calculValeur(expr)
@@ -419,6 +396,6 @@ if(choix=='2'):
 	print("\n"+str(exprBool)+"\n")
 	comptePorte(exprBool)
 	donneEntree(exprBool)
-	composition(exprBool)
+	print(composition(exprBool))
 	#ordreGraphique(str(test))
 	#expression = addapt(str(test))
