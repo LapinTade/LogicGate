@@ -6,29 +6,24 @@ import sys, random
 #@TODO Faire des fichiers séparé par classe :p
 
 #TEST
-class MySquare(QtGui.QGraphicsItem):
-    def __init__(self, parent=None):
-        super(MySquare, self).__init__(parent)
-        self.pressed = False
+class Gate(QtGui.QGraphicsItem):
+    def __init(self, x,y,scale=1,h=20,w=20, parent=None):
+        super(Gate, self).__init(parent)
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
-    
-    #@Override
+
     def boundingRect(self):
-        return QtCore.QRectF(0,0,100,100)
-    
+        return QtCore.QRectF(0,0,30,20)
+
     def paint(self, painter, option, parent=None):
-        rec = self.boundingRect();
-        brush = QtGui.QBrush(QtGui.QColor("blue"))
+        rec = QtCore.QRectF(0,0,20,20)
+
+        painter.setPen(QtGui.QColor("black"))
+        painter.drawLine(0,20,20,20)
         
-        if self.pressed:
-            brush.setColor(QtGui.QColor("red"))
-        else:
-            brush.setColor(QtGui.QColor("green"))
         
-        painter.fillRect(rec, brush)
-        painter.drawRect(rec)
-    
-    def mousePressEvent(self, event):
+        
+
+    """def mousePressEvent(self, event):
         self.pressed = True
         self.update()
         QtGui.QGraphicsItem.mousePressEvent(self,event)
@@ -36,7 +31,25 @@ class MySquare(QtGui.QGraphicsItem):
     def mouseReleaseEvent(self, event):
         self.pressed = False
         self.update()
-        QtGui.QGraphicsItem.mouseReleaseEvent(self,event)
+        QtGui.QGraphicsItem.mouseReleaseEvent(self,event)"""
+
+class andGate(Gate):
+    def __init__(self, parent=None):
+        super(andGate, self).__init__(parent)
+        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+    
+    #@Override
+    def boundingRect(self):
+        return QtCore.QRectF(0,0,30,20)
+    
+    def paint(self, painter, option, parent=None):
+        super(andGate, self).paint(painter,option)
+        painter.drawLine(0,0,0,20)
+        painter.drawLine(0,0,20,0)
+        
+        painter.drawText(3,15,"&")
+        painter.drawArc(QtCore.QRectF(10,0,20,20),90*16,-180*16)
+
 #TEST
 
 class Plan(QtGui.QGraphicsView):
@@ -49,19 +62,19 @@ class Plan(QtGui.QGraphicsView):
 
         self.scene = QtGui.QGraphicsScene()
 
-        self.drawAndGate(50,50)
+        #self.drawAndGate(50,50)
 
         self.setScene(self.scene)
         self.scene.setSceneRect(0,0,780,500)
 
-        self.square = MySquare()
-        self.scene.addItem(self.square)
+        self.gate = andGate()
+        self.scene.addItem(self.gate)
 
         #self.scale(2,2)
         self.show()
 
 
-    def drawAndGate(self,x,y,scale=1,h=20,w=20):
+    """def drawAndGate(self,x,y,scale=1,h=20,w=20):
         h_size = h * scale
         dh_size = (h_size/2)
         w_size = w * scale
@@ -88,7 +101,7 @@ class Plan(QtGui.QGraphicsView):
     def drawText(self,x,y,string):
         txt = QtGui.QGraphicsTextItem(string)
         txt.setPos(x,y)
-        self.scene.addItem(txt)
+        self.scene.addItem(txt)"""
 
 
 class Ui_MainWindow(object):
