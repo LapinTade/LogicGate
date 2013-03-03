@@ -1,9 +1,14 @@
 #-*- coding: utf-8 -*- 
 from PyQt4 import QtCore, QtGui, QtOpenGL
+import fonction
 
 import sys, random
 
 #@TODO Faire des fichiers séparé par classe :p
+#   Ajouter class entree (avec valeur bool)
+#   Ajouter le 'linkage' des portes avec les entree ou entres elles
+#   Ajouter le résultat de chaque porte
+#   ...
 
 #TEST
 class Gate(QtGui.QGraphicsItem):
@@ -18,16 +23,29 @@ class Gate(QtGui.QGraphicsItem):
 
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
 
+        self.entreeA = None
+        self.entreeB = None
+
+    def __str__(self):
+        return "entreeA: %s, entreeB: %s" % (self.entreeA, self.entreeB)
+
     def boundingRect(self):
         return QtCore.QRectF(0,0,self.size*2,self.size+(self.size/2))
 
     def paint(self, painter, option, parent=None):
         painter.setPen(QtGui.QColor("black"))
 # painter.drawEllipse(QtCore.QRectF(self.size+(self.size/2),(self.size/4),(self.size/2),(self.size/2)))
+    
+    def setEntries(self, entreeA, entreeB):
+        self.entreeA, self.entreeB = entreeA, entreeB
+
 
 class AndGate(Gate):
     def __init__(self,*args,**kwargs):
         super(AndGate, self).__init__(*args,**kwargs)
+
+    def __str__(self):
+        return "AndGate: " + super(AndGate, self).__str__()
     
     def paint(self, painter, option, parent=None):
         super(AndGate, self).paint(painter,option)
@@ -43,21 +61,82 @@ class OrGate(Gate):
     def __init__(self,*args,**kwargs):
         super(OrGate, self).__init__(*args,**kwargs)
 
+    def __str__(self):
+        return "OrGate: " + super(OrGate, self).__str__()
+ 
     def paint(self, painter, option, parent=None):
         super(OrGate, self).paint(painter,option)
+        painter.drawLine(0,self.size,self.size,self.size)
+        painter.drawLine(0,0,self.size,0)
 
+        painter.drawArc(QtCore.QRectF(-self.size/2,0,self.size,self.size),90*16,-180*16)
+        painter.drawArc(QtCore.QRectF(0,0,self.size*2,self.size*2),90*16,-60*16)
+        painter.drawArc(QtCore.QRectF(0,-self.size,self.size*2,self.size*2),-90*16,60*16)
+
+
+class XOrGate(Gate):
+    def __init__(self,*args,**kwargs):
+        super(XOrGate, self).__init__(*args,**kwargs)
+
+    def __str__(self):
+        return "XOrGate: " + super(XOrGate, self).__str__()
+ 
+    def paint(self, painter, option, parent=None):
+        super(XOrGate, self).paint(painter,option)
+        painter.drawLine(0,self.size,self.size,self.size)
+        painter.drawLine(0,0,self.size,0)
+
+        painter.drawArc(QtCore.QRectF(-self.size/2-1,0,self.size,self.size),90*16,-180*16)
+        painter.drawArc(QtCore.QRectF(-self.size/2+2,0,self.size,self.size),90*16,-180*16)
+        painter.drawArc(QtCore.QRectF(0,0,self.size*2,self.size*2),90*16,-60*16)
+        painter.drawArc(QtCore.QRectF(0,-self.size,self.size*2,self.size*2),-90*16,60*16)
 
 
 class NotGate(Gate):
     def __init__(self,*args,**kwargs):
         super(NotGate, self).__init__(*args,**kwargs)
 
+    def __str__(self):
+        return "NotGate: ", super(NotGate, self).__str__()
+ 
     def paint(self, painter, option, parent=None):
         super(NotGate, self).paint(painter,option)
-        painter.drawText(self.size/2,(self.size/2)+(self.size/8),"1")
+        painter.drawText(0,(self.size/2)+(self.size/5),"1")
         painter.drawLine(0,0,0,self.size)
         painter.drawLine(0,0,self.size,self.size/2)
         painter.drawLine(0,self.size,self.size,self.size/2)
+
+
+class Circuit(object):
+    def __init__(self, inputGate, inputEntries):
+        self.circuit = inputGate
+        self.lstGates = []
+        self.lstEntries = inputEntries
+        """self.gates = { "or" : OrGate(0,0),
+                        "and" : AndGate(0,0),
+                        "xor" : XOrGate(0,0),
+                        "not" : NotGate(0,0)}.get(valeur,None)()"""
+        for porte in self.circuit:
+            porteOne = porte[1]
+            if porteOne == "or":
+                gate = OrGate(0,0)
+                gate.setEntries(porte[0],porte[2])
+                self.lstGates.append(gate)
+            elif porteOne == "and":
+                gate = AndGate(0,0)
+                gate.setEntries(porte[0],porte[2])
+                self.lstGates.append(gate)
+            #elif porteOne == "etc..."
+
+    def showGates(self):
+        for porte in self.circuit:
+            print porte[1]
+
+    def showEntries(self):
+        print self.lstEntries
+
+    def getGates(self):
+        return self.lstGates
 
 
 class Plan(QtGui.QGraphicsView):
@@ -73,8 +152,36 @@ class Plan(QtGui.QGraphicsView):
         self.setScene(self.scene)
         self.scene.setSceneRect(0,0,780,500)
 
-        self.gate = NotGate(50,50)
-        self.scene.addItem(self.gate)
+        """self.gate = NotGate(50,50)
+            self.scene.addItem(self.gate)
+            self.gate = AndGate(150,150)
+            self.scene.addItem(self.gate)
+            self.gate = OrGate(250,250)
+            self.scene.addItem(self.gate)
+            self.gate = XOrGate(350,350)
+            self.scene.addItem(self.gate)"""
+
+        expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+        print expr
+        exprBool = fonction.decompose(expr)
+        entries = fonction.donneEntree(exprBool)
+        circuit = Circuit(fonction.composition(exprBool), entries)
+        circuit.showGates()
+        ggates = circuit.getGates()
+        x = 0
+        for gate in ggates:
+            print gate
+            self.gate = gate
+            self.gate.setPos(50+x,20)
+            self.scene.addItem(self.gate)
+            x += 60
+
+        x = 0
+        for entry in circuit.lstEntries:
+            txt = QtGui.QGraphicsTextItem(entry)
+            txt.setPos(10,30+x)
+            self.scene.addItem(txt)
+            x += 50
 
         #self.scale(2,2)
         self.show()
