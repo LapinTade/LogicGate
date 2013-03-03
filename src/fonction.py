@@ -367,35 +367,37 @@ def remiseEnForme(l):
 		else:
 			porte.append(l[i])
 	return porte	
-		
-choix=raw_input("Calcul de la valeur de l'expression(1), decomposition de l'expression(2) : ");
 
-if(choix=='1'):
-	expr = "p and q"
-	valeurBool = calculValeur(expr)
-	test=decompose(expr)
-	entree=donneEntree(test)
-	#p = True
-	#q = False
-	#r = True
-	dic = {}
-	dic["q"]=True
-	dic["p"]=True
-	print entree
-	str(valeurBool).replace(entree[0],dic["q"])
-	#print expr,'\n', valeurBool, '=', bool(valeurBool),'\n'
-	
-if(choix=='2'):
-	temps = []
-	expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
-	#expr = 'a and b or ((a and b) or (c and d))'
-	#expr = '(a and not r) and b'
-	#expr = 'a or b and not b'
-	test = calculValeur(expr)
-	exprBool=decompose(expr)
-	print("\n"+str(exprBool)+"\n")
-	comptePorte(exprBool)
-	donneEntree(exprBool)
-	print(composition(exprBool))
-	#ordreGraphique(str(test))
-	#expression = addapt(str(test))
+if __name__=="__main__":
+		
+	choix=raw_input("Calcul de la valeur de l'expression(1), decomposition de l'expression(2) : ");
+
+	if(choix=='1'):
+		expr = "p and q"
+		valeurBool = calculValeur(expr)
+		test=decompose(expr)
+		entree=donneEntree(test)
+		#p = True
+		#q = False
+		#r = True
+		dic = {}
+		dic["q"]=True
+		dic["p"]=True
+		print entree
+		str(valeurBool).replace(entree[0],dic["q"])
+		#print expr,'\n', valeurBool, '=', bool(valeurBool),'\n'
+		
+	if(choix=='2'):
+		temps = []
+		expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+		#expr = 'a and b or ((a and b) or (c and d))'
+		#expr = '(a and not r) and b'
+		#expr = 'a or b and not b'
+		test = calculValeur(expr)
+		exprBool=decompose(expr)
+		print("\n"+str(exprBool)+"\n")
+		comptePorte(exprBool)
+		donneEntree(exprBool)
+		print(composition(exprBool))
+		#ordreGraphique(str(test))
+		#expression = addapt(str(test))
