@@ -7,50 +7,58 @@ import sys, random
 
 #TEST
 class Gate(QtGui.QGraphicsItem):
-    def __init(self, x,y,scale=1,h=20,w=20, parent=None):
-        super(Gate, self).__init(parent)
+    def __init__(self, x, y, size=20, scale=1, parent=None):
+        super(Gate, self).__init__(parent)
+        self.x = x
+        self.y = y
+        self.size = size
+        self.scale = scale
+
+        self.setPos(self.x,self.y)
+
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
 
     def boundingRect(self):
-        return QtCore.QRectF(0,0,30,20)
+        return QtCore.QRectF(0,0,self.size*2,self.size+(self.size/2))
 
     def paint(self, painter, option, parent=None):
-        rec = QtCore.QRectF(0,0,20,20)
-
         painter.setPen(QtGui.QColor("black"))
-        painter.drawLine(0,20,20,20)
-        
-        
-        
+# painter.drawEllipse(QtCore.QRectF(self.size+(self.size/2),(self.size/4),(self.size/2),(self.size/2)))
 
-    """def mousePressEvent(self, event):
-        self.pressed = True
-        self.update()
-        QtGui.QGraphicsItem.mousePressEvent(self,event)
-    
-    def mouseReleaseEvent(self, event):
-        self.pressed = False
-        self.update()
-        QtGui.QGraphicsItem.mouseReleaseEvent(self,event)"""
-
-class andGate(Gate):
-    def __init__(self, parent=None):
-        super(andGate, self).__init__(parent)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
-    
-    #@Override
-    def boundingRect(self):
-        return QtCore.QRectF(0,0,30,20)
+class AndGate(Gate):
+    def __init__(self,*args,**kwargs):
+        super(AndGate, self).__init__(*args,**kwargs)
     
     def paint(self, painter, option, parent=None):
-        super(andGate, self).paint(painter,option)
-        painter.drawLine(0,0,0,20)
-        painter.drawLine(0,0,20,0)
+        super(AndGate, self).paint(painter,option)
+        painter.drawLine(0,self.size,self.size,self.size)
+        painter.drawLine(0,0,self.size,0)
+        painter.drawLine(0,0,0,self.size)
         
-        painter.drawText(3,15,"&")
-        painter.drawArc(QtCore.QRectF(10,0,20,20),90*16,-180*16)
+        painter.drawText(self.size/2,(self.size/2)+(self.size/8),"&")
+        painter.drawArc(QtCore.QRectF(self.size/2,0,self.size,self.size),90*16,-180*16)
 
-#TEST
+
+class OrGate(Gate):
+    def __init__(self,*args,**kwargs):
+        super(OrGate, self).__init__(*args,**kwargs)
+
+    def paint(self, painter, option, parent=None):
+        super(OrGate, self).paint(painter,option)
+
+
+
+class NotGate(Gate):
+    def __init__(self,*args,**kwargs):
+        super(NotGate, self).__init__(*args,**kwargs)
+
+    def paint(self, painter, option, parent=None):
+        super(NotGate, self).paint(painter,option)
+        painter.drawText(self.size/2,(self.size/2)+(self.size/8),"1")
+        painter.drawLine(0,0,0,self.size)
+        painter.drawLine(0,0,self.size,self.size/2)
+        painter.drawLine(0,self.size,self.size,self.size/2)
+
 
 class Plan(QtGui.QGraphicsView):
     def __init__(self, parent=None):
@@ -62,46 +70,14 @@ class Plan(QtGui.QGraphicsView):
 
         self.scene = QtGui.QGraphicsScene()
 
-        #self.drawAndGate(50,50)
-
         self.setScene(self.scene)
         self.scene.setSceneRect(0,0,780,500)
 
-        self.gate = andGate()
+        self.gate = NotGate(50,50)
         self.scene.addItem(self.gate)
 
         #self.scale(2,2)
         self.show()
-
-
-    """def drawAndGate(self,x,y,scale=1,h=20,w=20):
-        h_size = h * scale
-        dh_size = (h_size/2)
-        w_size = w * scale
-        dw_size = (w_size/2)
-        startAngle = 90 * 16
-        endAngle = -180 * 16
-
-        self.drawLine(x,y,x+h_size,y)
-        self.drawLine(x,y,x,y+w_size)
-        self.drawLine(x+h_size,y+w_size,x,y+w_size)
-        self.drawArc(x+dh_size,y,h_size,w_size,startAngle,endAngle)
-        self.drawText(x,y-3,"&")
-
-    def drawLine(self,x1,y1,x2,y2):
-        line=QtGui.QGraphicsLineItem(x1,y1,x2,y2)
-        self.scene.addItem(line)
-
-    def drawArc(self,x,y,height,width,startAngle,endAngle):
-        arc=QtGui.QGraphicsEllipseItem(x,y,height,width)
-        arc.setStartAngle(startAngle)
-        arc.setSpanAngle(endAngle)
-        self.scene.addItem(arc)
-
-    def drawText(self,x,y,string):
-        txt = QtGui.QGraphicsTextItem(string)
-        txt.setPos(x,y)
-        self.scene.addItem(txt)"""
 
 
 class Ui_MainWindow(object):
