@@ -8,6 +8,7 @@ import sys, random
 #   Ajouter class entree (avec valeur bool)
 #   Ajouter le 'linkage' des portes avec les entree ou entres elles
 #   Ajouter le résultat de chaque porte
+#   Ajouter les not entrée et sortie
 #   ...
 
 #TEST
