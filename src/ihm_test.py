@@ -162,7 +162,12 @@ class Plan(QtGui.QGraphicsView):
             self.gate = XOrGate(350,350)
             self.scene.addItem(self.gate)"""
 
-        expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+    def analyseExpr(self,txt):
+        self.scene.clear()
+        if txt != "":
+            expr = txt
+        else:
+            expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
         print expr
         exprBool = fonction.decompose(expr)
         entries = fonction.donneEntree(exprBool)
@@ -283,7 +288,11 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(LogicGate)
+        QtCore.QObject.connect(self.analyse, QtCore.SIGNAL("clicked()"), self.aExpr)
         QtCore.QMetaObject.connectSlotsByName(LogicGate)
+
+    def aExpr(self):
+        self.plan.analyseExpr(self.exprBool.text())
 
     def retranslateUi(self, LogicGate):
         LogicGate.setWindowTitle(QtGui.QApplication.translate("LogicGate", "LogicGate", None, QtGui.QApplication.UnicodeUTF8))
