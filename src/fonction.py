@@ -324,13 +324,13 @@ def composition(l):
 		if(len(str(l[i]))==2 or len(str(l[i]))==3):
 			if(l[i]=="and" or l[i]=="or"):
 				if(l[i+1]=='not' and len(str(l[i+2]))==1):
-					porte.append("porte["+str(nombreInsertion-1)+"],"+l[i]+","+l[i+1]+" "+l[i+2])
+					porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1]+" "+l[i+2])
 					nombreInsertion+=1
 				elif(len(str(l[i+1]))>1):
-					porte.append("porte["+str(nombreInsertion-1)+"],"+l[i]+",porte["+str(nombreInsertion+1)+"]")
+					porte.append(str(nombreInsertion-1)+","+l[i]+","+str(nombreInsertion+1))
 					nombreInsertion+=1
 				else:
-					porte.append("porte["+str(nombreInsertion-1)+"],"+l[i]+","+l[i+1])
+					porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1])
 					nombreInsertion+=1
 		elif(len(str(l[i]))>3):
 			porte.append(l[i])
