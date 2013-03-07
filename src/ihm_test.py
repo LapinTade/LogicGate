@@ -21,6 +21,9 @@ class Entry(QtGui.QGraphicsTextItem):
         self.y = y
         self.value = value
 
+    def __str__(self):
+        return self.name
+
     def getValue(self):
         return value
 
@@ -58,6 +61,9 @@ class Gate(QtGui.QGraphicsItem):
     
     def setEntries(self, entreeA, entreeB):
         self.entreeA, self.entreeB = entreeA, entreeB
+
+    def getEntries(self):
+        return (self.entreeA,self.entreeB)
 
 
 class AndGate(Gate):
@@ -142,8 +148,7 @@ class Circuit(object):
             porteOne = porte[1]
             if porteOne == "or":
                 gate = OrGate(0,0)
-                #gate.setEntries(porte[0],porte[2])
-                
+                #gate.setEntries(porte[0],porte[2]) 
             elif porteOne == "and":
                 gate = AndGate(0,0)
                 #gate.setEntries(porte[0],porte[2])
@@ -155,8 +160,27 @@ class Circuit(object):
         for x in range(0,len(self.circuit)):
             #print "TYPE1:",type(self.entryCreator(porte[0]))
             #print "TYPE1:",type(self.entryCreator(porte[2]))
-            self.lstGates[x].setEntries(self.entryCreator(porte[0]),self.entryCreator(porte[2]))
+            self.lstGates[x].setEntries(self.entryCreator(self.circuit[x][0]),self.entryCreator(self.circuit[x][2]))
 
+    def posGates(self):
+        pass
+        """notPosedGate = []
+                        
+                                for k in range(0,len(self.lstGates)):
+                                    notPosedGate.append(True)
+                        
+                                x = 30
+                        
+                                for k in range(0,len(self.lstGates)): 
+                                    for gate in self.lstGates:
+                                        if notPosedGate[k]:
+                                            entreeA, entreeB = self.lstGates[gate].getEntries()
+                                            if isinstance(entreeA, Entry) and isinstance(entreeB, Entry):
+                                                self.lstGates[gate].setX(x)
+                                                notPosedGate[gate] = False
+                        
+                                    x += 60"""
+        
     def showGates(self):
         for porte in self.circuit:
             print porte[1]
@@ -173,7 +197,6 @@ class Circuit(object):
     def entryCreator(self, entry):
         if "not" in entry:
             return
-
         try:
             entry = int(entry)
             return self.lstGates[entry]
@@ -239,7 +262,8 @@ class Plan(QtGui.QGraphicsView):
             self.scene.addItem(entry)
             x += 50
 
-        circuit.showGates
+        #circuit.showGates()
+        circuit.posGates()
         #self.scale(2,2)
         self.show()
 
