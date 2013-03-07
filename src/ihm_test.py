@@ -1,6 +1,7 @@
 #-*- coding: utf-8 -*- 
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import fonction
+from math import isnan
 
 import sys, random
 
@@ -12,6 +13,24 @@ import sys, random
 #   ...
 
 #TEST
+class Entry(QtGui.QGraphicsTextItem):
+    def __init__(self, name, x, y, value,parent=None):
+        super(Entry, self).__init__(parent)
+        self.name = name
+        self.x = x
+        self.y = y
+        self.value = value
+
+    def getValue(self):
+        return value
+
+    def setValue(self, value):
+        self.value = value
+
+    def paint(self, painter, option, parent=None):
+        painter.setPen(QtGui.QColor("black"))
+        painter.drawText(self.x,self.y,self.name)
+
 class Gate(QtGui.QGraphicsItem):
     def __init__(self, x, y, size=20, scale=1, parent=None):
         super(Gate, self).__init__(parent)
@@ -109,25 +128,34 @@ class NotGate(Gate):
 
 
 class Circuit(object):
-    def __init__(self, inputGate, inputEntries):
-        self.circuit = inputGate
-        self.lstGates = []
+    def __init__(self, inputGates, inputEntries):
+        self.circuit = inputGates
+        self.lstGates = {}
         self.lstEntries = inputEntries
+
         """self.gates = { "or" : OrGate(0,0),
                         "and" : AndGate(0,0),
                         "xor" : XOrGate(0,0),
                         "not" : NotGate(0,0)}.get(valeur,None)()"""
+        x = 0
         for porte in self.circuit:
             porteOne = porte[1]
             if porteOne == "or":
                 gate = OrGate(0,0)
-                gate.setEntries(porte[0],porte[2])
-                self.lstGates.append(gate)
+                #gate.setEntries(porte[0],porte[2])
+                
             elif porteOne == "and":
                 gate = AndGate(0,0)
-                gate.setEntries(porte[0],porte[2])
-                self.lstGates.append(gate)
+                #gate.setEntries(porte[0],porte[2])
+            self.lstGates[x] = gate
+            x += 1
             #elif porteOne == "etc..."
+
+
+        for x in range(0,len(self.circuit)):
+            #print "TYPE1:",type(self.entryCreator(porte[0]))
+            #print "TYPE1:",type(self.entryCreator(porte[2]))
+            self.lstGates[x].setEntries(self.entryCreator(porte[0]),self.entryCreator(porte[2]))
 
     def showGates(self):
         for porte in self.circuit:
@@ -138,6 +166,19 @@ class Circuit(object):
 
     def getGates(self):
         return self.lstGates
+
+    def showGates(self):
+        print self.lstGates
+
+    def entryCreator(self, entry):
+        if "not" in entry:
+            return
+
+        try:
+            entry = int(entry)
+            return self.lstGates[entry]
+        except:
+            return self.lstEntries[entry]
 
 
 class Plan(QtGui.QGraphicsView):
@@ -164,6 +205,7 @@ class Plan(QtGui.QGraphicsView):
 
     def analyseExpr(self,txt):
         self.scene.clear()
+        entriesObjects = {}
         if txt != "":
             expr = txt
         else:
@@ -171,24 +213,33 @@ class Plan(QtGui.QGraphicsView):
         print expr
         exprBool = fonction.decompose(expr)
         entries = fonction.donneEntree(exprBool)
-        circuit = Circuit(fonction.composition(exprBool), entries)
-        circuit.showGates()
+
+        for entry in entries:
+            entriesObjects[entry] = Entry(entry, 0, 0, False)
+
+        circuit = Circuit(fonction.composition(exprBool), entriesObjects)
         ggates = circuit.getGates()
+
+        ### On set les positions des gates et entries
+        #   Futur migration dans le cricuit.
         x = 0
-        for gate in ggates:
-            print gate
-            self.gate = gate
+        for y in range(0,len(ggates)):
+            self.gate = ggates[y]
             self.gate.setPos(50+x,20)
             self.scene.addItem(self.gate)
             x += 60
 
         x = 0
-        for entry in circuit.lstEntries:
-            txt = QtGui.QGraphicsTextItem(entry)
-            txt.setPos(10,30+x)
-            self.scene.addItem(txt)
+        for y in range(0,len(circuit.lstEntries)):
+            #txt = QtGui.QGraphicsTextItem(entry)
+            #txt.setPos(10,30+x)
+            #self.scene.addItem(txt)
+            entry = circuit.lstEntries[entries[y]]
+            entry.setPos(10,30+x)
+            self.scene.addItem(entry)
             x += 50
 
+        circuit.showGates
         #self.scale(2,2)
         self.show()
 
