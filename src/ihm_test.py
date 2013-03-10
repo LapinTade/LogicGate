@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*- 
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import fonction
-from math import isnan
+import math
 
 import sys, random
 
@@ -12,8 +12,15 @@ import sys, random
 #   Ajouter les not entrée et sortie
 #   ...
 
-#TEST
-class Entry(QtGui.QGraphicsTextItem):
+def debug_trace():
+  '''Set a tracepoint in the Python debugger that works with Qt'''
+  from PyQt4.QtCore import pyqtRemoveInputHook
+  from pdb import set_trace
+  pyqtRemoveInputHook()
+  set_trace()
+
+
+class Entry(QtGui.QGraphicsItem):
     def __init__(self, name, x, y, value,parent=None):
         super(Entry, self).__init__(parent)
         self.name = name
@@ -21,11 +28,24 @@ class Entry(QtGui.QGraphicsTextItem):
         self.y = y
         self.value = value
 
+        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
+
     def __str__(self):
-        return self.name
+        return str(self.name)
+
+    """def setPos(self, x, y):
+                    self.x = x
+                    self.y = y
+                    super(Entry, self).setPos(x,y)"""
+
+    def boundingRect(self):
+        return QtCore.QRectF(0,0,10,10)
 
     def getValue(self):
-        return value
+        return self.value
+
+    def getName(self):
+        return self.name
 
     def setValue(self, value):
         self.value = value
@@ -34,23 +54,26 @@ class Entry(QtGui.QGraphicsTextItem):
         painter.setPen(QtGui.QColor("black"))
         painter.drawText(self.x,self.y,self.name)
 
+        if(self.isSelected()):
+            print 'X:%s, Y:%s === name: %s' % (self.pos().x(), self.pos().y(),self.name)
+
 class Gate(QtGui.QGraphicsItem):
     def __init__(self, x, y, size=20, scale=1, parent=None):
         super(Gate, self).__init__(parent)
-        self.x = x
-        self.y = y
         self.size = size
         self.scale = scale
 
-        self.setPos(self.x,self.y)
+        self.setPos(x,y)
 
         self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
 
         self.entreeA = None
         self.entreeB = None
 
-    def __str__(self):
-        return "entreeA: %s, entreeB: %s" % (self.entreeA, self.entreeB)
+    #def __str__(self):
+        #return "entreeA: " + self.entreeA + ", entreeB: " + self.entreeB
+
 
     def boundingRect(self):
         return QtCore.QRectF(0,0,self.size*2,self.size+(self.size/2))
@@ -58,7 +81,11 @@ class Gate(QtGui.QGraphicsItem):
     def paint(self, painter, option, parent=None):
         painter.setPen(QtGui.QColor("black"))
 # painter.drawEllipse(QtCore.QRectF(self.size+(self.size/2),(self.size/4),(self.size/2),(self.size/2)))
-    
+        if(self.isSelected()):
+            print "\nid(self): %s" % (id(self))
+            print "X:%s, Y:%s === entreeA: %s, entreeB: %s" % (self.pos().x(), self.pos().y(), type(self.entreeA), type(self.entreeB))
+            print "Add entreeA: %s, Add entreeB: %s" % (id(self.entreeA), id(self.entreeB))
+
     def setEntries(self, entreeA, entreeB):
         self.entreeA, self.entreeB = entreeA, entreeB
 
@@ -133,6 +160,12 @@ class NotGate(Gate):
         painter.drawLine(0,self.size,self.size,self.size/2)
 
 
+class Connexion(QtGui.QGraphicsLineItem):
+    def __init__(self,x1,y1,x2,y2):
+         print "HELOO"
+
+
+
 class Circuit(object):
     def __init__(self, inputGates, inputEntries):
         self.circuit = inputGates
@@ -145,6 +178,7 @@ class Circuit(object):
                         "not" : NotGate(0,0)}.get(valeur,None)()"""
         x = 0
         for porte in self.circuit:
+            #print porte
             porteOne = porte[1]
             if porteOne == "or":
                 gate = OrGate(0,0)
@@ -163,23 +197,84 @@ class Circuit(object):
             self.lstGates[x].setEntries(self.entryCreator(self.circuit[x][0]),self.entryCreator(self.circuit[x][2]))
 
     def posGates(self):
-        pass
-        """notPosedGate = []
+        notPosedGate = []
                         
-                                for k in range(0,len(self.lstGates)):
-                                    notPosedGate.append(True)
-                        
-                                x = 30
-                        
-                                for k in range(0,len(self.lstGates)): 
-                                    for gate in self.lstGates:
-                                        if notPosedGate[k]:
-                                            entreeA, entreeB = self.lstGates[gate].getEntries()
-                                            if isinstance(entreeA, Entry) and isinstance(entreeB, Entry):
-                                                self.lstGates[gate].setX(x)
-                                                notPosedGate[gate] = False
-                        
-                                    x += 60"""
+        for k in range(0,len(self.lstGates)):
+            notPosedGate.append(True)
+
+        x = 50
+        shift = 60
+
+        for k in range(0,len(self.lstGates)): 
+            for gate in self.lstGates:
+                if notPosedGate[gate]:
+                    #debug_trace()
+                    #print "\n>k:",k," => ",id(self.lstGates[gate])
+                    entreeA, entreeB = self.lstGates[gate].getEntries()
+                    #print id(entreeA),id(entreeB),"<"
+                    if isinstance(entreeA, Entry) and isinstance(entreeB, Entry):
+                        self.lstGates[gate].setX(x)
+                        notPosedGate[gate] = False
+
+                    #Cas A est une porte et B non
+                    if isinstance(entreeA, Gate) and isinstance(entreeB, Entry):
+                        self.lstGates[gate].setX(entreeA.pos().x()+shift)
+                        notPosedGate[gate] = False
+
+                    #Cas B est une porte et A non
+                    if isinstance(entreeB, Gate) and isinstance(entreeA, Entry):
+                        self.lstGates[gate].setX(entreeB.pos().x()+shift)
+                        notPosedGate[gate] = False
+
+                    #Cas ou A et B sont des portes
+                    if isinstance(entreeA, Gate) and isinstance(entreeB, Gate):
+                        #print "ICI"
+                        for w in range(0,len(self.lstGates)):
+                            #debug_trace()
+                            b = self.lstGates[w]
+                            if b is entreeA:
+                                posedA = notPosedGate[w]
+                            if b is entreeB:
+                                posedB = notPosedGate[w]
+                        #print posedA,posedB
+                        if (not posedA and not posedB):
+                            #print "ON PEUT POSER LA double GATE"
+                            notPosedGate[gate] = False
+                            #print "\nA",self.lstGates[gate].pos()
+                            if entreeA.pos().x() > entreeB.pos().x():
+                                self.lstGates[gate].setX(entreeA.pos().x()+shift)
+                            else:
+                                self.lstGates[gate].setX(entreeB.pos().x()+shift)
+                            print "B",self.lstGates[gate].pos()
+                            notPosedGate[gate] = False
+
+                    #Cas d'erreur
+                    if entreeA is None or entreeB is None:
+                        self.lstGates[gate].setPos(0,0)
+                        notPosedGate[gate] = False
+                        break
+
+                    #print "C",self.lstGates[gate].pos()
+                    self.lstGates[gate].setY(math.fabs(entreeA.pos().y() + entreeB.pos().y())/2)
+                    #print "D",self.lstGates[gate].pos(),"\n"
+
+
+    def drawConnection(self,scene):
+        for gate in self.lstGates:
+            gateX = int(self.lstGates[gate].pos().x())
+            gateY = int(self.lstGates[gate].pos().y())
+
+            entryA, entryB = self.lstGates[gate].getEntries()
+            entryAX = int(entryA.pos().x())
+            entryAY = int(entryA.pos().y())
+            entryBX = int(entryB.pos().x())
+            entryBY = int(entryB.pos().y())
+
+            scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryAX,entryAY))
+            scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryBX,entryBY))
+
+            #print "\nEntryA: %s EntryB: %s" % (entryA.pos(),entryB.pos())
+            #print "A( %s, %s); B( %s, %s)" % (entryAX,entryAY, entryBX,entryBY)
         
     def showGates(self):
         for porte in self.circuit:
@@ -217,14 +312,6 @@ class Plan(QtGui.QGraphicsView):
         self.setScene(self.scene)
         self.scene.setSceneRect(0,0,780,500)
 
-        """self.gate = NotGate(50,50)
-            self.scene.addItem(self.gate)
-            self.gate = AndGate(150,150)
-            self.scene.addItem(self.gate)
-            self.gate = OrGate(250,250)
-            self.scene.addItem(self.gate)
-            self.gate = XOrGate(350,350)
-            self.scene.addItem(self.gate)"""
 
     def analyseExpr(self,txt):
         self.scene.clear()
@@ -232,10 +319,13 @@ class Plan(QtGui.QGraphicsView):
         if txt != "":
             expr = txt
         else:
-            expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+            #expr = "a and b or ((a and b) or (c and d))"
+            expr = "(a and b) or (b and c)"
+            #expr = '((a or r) and (a or b)) and (a or x) or not(x and y)'
         print expr
         exprBool = fonction.decompose(expr)
         entries = fonction.donneEntree(exprBool)
+
 
         for entry in entries:
             entriesObjects[entry] = Entry(entry, 0, 0, False)
@@ -248,7 +338,7 @@ class Plan(QtGui.QGraphicsView):
         x = 0
         for y in range(0,len(ggates)):
             self.gate = ggates[y]
-            self.gate.setPos(50+x,20)
+            self.gate.setPos(50+x,656)
             self.scene.addItem(self.gate)
             x += 60
 
@@ -264,6 +354,7 @@ class Plan(QtGui.QGraphicsView):
 
         #circuit.showGates()
         circuit.posGates()
+        circuit.drawConnection(self.scene)
         #self.scale(2,2)
         self.show()
 
@@ -288,29 +379,6 @@ class Ui_MainWindow(object):
         self.exprBool = QtGui.QLineEdit(self.centralwidget)
         self.exprBool.setGeometry(QtCore.QRect(0, 522, 400, 30))
         self.exprBool.setObjectName("exprBool")
-
-        """self.pushButton_2 = QtGui.QPushButton(self.centralwidget)
-        self.pushButton_2.setGeometry(QtCore.QRect(780, 501, 20, 20))
-        self.pushButton_2.setObjectName("pushButton_2")
-
-        self.pushButton_3 = QtGui.QPushButton(self.centralwidget)
-        self.pushButton_3.setGeometry(QtCore.QRect(757, 501, 20, 20))
-        self.pushButton_3.setObjectName("pushButton_3")
-
-        self.horizontalScrollBar = QtGui.QScrollBar(self.centralwidget)
-        self.horizontalScrollBar.setGeometry(QtCore.QRect(0, 500, 755, 20))
-        self.horizontalScrollBar.setMinimum(-99)
-        self.horizontalScrollBar.setSliderPosition(0)
-        self.horizontalScrollBar.setOrientation(QtCore.Qt.Horizontal)
-        self.horizontalScrollBar.setObjectName("horizontalScrollBar")
-
-        self.verticalScrollBar = QtGui.QScrollBar(self.centralwidget)
-        self.verticalScrollBar.setGeometry(QtCore.QRect(780, 0, 20, 500))
-        self.verticalScrollBar.setMinimum(-99)
-        self.verticalScrollBar.setProperty("value", 0)
-        self.verticalScrollBar.setSliderPosition(0)
-        self.verticalScrollBar.setOrientation(QtCore.Qt.Vertical)
-        self.verticalScrollBar.setObjectName("verticalScrollBar")"""
 
         self.plan = Plan(self.centralwidget)
         self.plan.setFixedSize(800,520)        
