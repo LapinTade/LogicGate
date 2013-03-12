@@ -318,7 +318,6 @@ def composition(l):
 					porte.append(l[i]+","+l[i+1]+","+l[i+2]+" "+l[i+3])
 					nombreInsertion+=1
 				elif(str(l[i-1])=='or' or str(l[i-1])=='and'):
-					print "coucou"
 					porte.append(str(nombreInsertion-1)+","+l[i+1]+","+l[i+2])
 					nombreInsertion+=1
 					i+=2
@@ -345,8 +344,13 @@ def composition(l):
 				elif(len(str(l[i-1]))==1):
 					print"fuck"
 					if(str(l[i-2])=='or' or str(l[i-2])=='and'):
-						print"fuck"
-						porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1])
+						print "tu veux voir ma bite"
+						if(str(l[i+1])==1):
+							porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1])
+						elif(str(l[i+1])>3):
+							porte.append(str(nombreInsertion-1)+","+l[i]+","+str(nombreInsertion+1))
+						else:
+							porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1])
 					nombreInsertion+=1
 				elif(len(str(l[i+1]))>1):
 					porte.append(str(nombreInsertion-1)+","+l[i]+","+str(nombreInsertion+1))
@@ -416,7 +420,7 @@ if __name__=="__main__":
 		#expr = 'a and b or ((a and b) or (c and d))'
 		#expr = '(((a and b) and (b and c)) or (b and c)) and ((a and b) and (b and c))'
 		#expr = '(((a and b) and v) or c)'
-		expr = '((c or d) or (v and a)) and b'
+		expr = '(((a and b) or c) and d) or (a and c)'
 		#expr = '(a and v) and c or c and ((a and b) and (b and c))' a gerer les priorités entre parenthèses.
 		#expr = 'a and b and c and d'
 		#expr = '(a and not r) and b'
