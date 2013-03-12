@@ -341,9 +341,7 @@ def composition(l):
 						porte.append(str(nombreInsertion-1-exprPar)+","+l[i]+","+l[i+1])
 					nombreInsertion+=1
 				elif(len(str(l[i-1]))==1):
-					print"fuck"
 					if(str(l[i-2])=='or' or str(l[i-2])=='and'):
-						print"fuck"
 						porte.append(str(nombreInsertion-1)+","+l[i]+","+str(nombreInsertion+1))
 					nombreInsertion+=1
 				elif(len(str(l[i+1]))>1):
