@@ -161,8 +161,27 @@ class NotGate(Gate):
 
 
 class Connexion(QtGui.QGraphicsLineItem):
-    def __init__(self,x1,y1,x2,y2):
-         print "HELOO"
+    def __init__(self,x1,y1,x2,y2,parent=None):
+        super(Connexion, self).__init__(parent)
+        self.x1 = x1
+        self.x2 = x2
+        self.y1 = y1
+        self.y2 = y2
+        self.midX = (x1 + x2) / 2
+        self.midY = (y1 + y2) / 2
+
+    def paint(self, painter, option, parent=None):
+        """
+        (x1,y1)___(self.midX,y1)
+                        |
+                        |
+                        |
+                  (self.midX,y2) ____ (x2,y2)
+        """
+        painter.setPen(QtGui.QColor("black"))
+        painter.drawLine(self.x1,self.y1,self.midX,self.y1)
+        painter.drawLine(self.midX,self.y1,self.midX,self.y2)
+        painter.drawLine(self.midX,self.y2,self.x2,self.y2)
 
 
 
@@ -270,9 +289,12 @@ class Circuit(object):
             entryBX = int(entryB.pos().x())
             entryBY = int(entryB.pos().y())
 
-            scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryAX,entryAY))
-            scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryBX,entryBY))
-
+            #scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryAX,entryAY))
+            #scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryBX,entryBY))
+            con1 = Connexion(gateX,gateY,entryAX,entryAY)
+            con2 = Connexion(gateX,gateY,entryBX,entryBY)
+            scene.addItem(con1)
+            scene.addItem(con2)
             #print "\nEntryA: %s EntryB: %s" % (entryA.pos(),entryB.pos())
             #print "A( %s, %s); B( %s, %s)" % (entryAX,entryAY, entryBX,entryBY)
         
