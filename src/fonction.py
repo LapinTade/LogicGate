@@ -46,7 +46,7 @@ class BoolNot(BoolOperand):
         return not v
 
 def decompose(expr):
-	regex = re.compile('\((\w+)\s+(and|or|and\s+not|or\s+not)\s+(\w)\)|(\w+)|not(\w)')
+	regex = re.compile('\((\w+)\s+(and|or|and\s+not|or\s+not)\s+(\w)+\)|(\w+)|not(\w)')
 	results = regex.findall(expr)
 	results = [i[:3] if i[0] else i[3] for i in results]
 	return results
@@ -317,6 +317,10 @@ def composition(l):
 				if(l[i+2]=="not"):
 					porte.append(l[i]+","+l[i+1]+","+l[i+2]+" "+l[i+3])
 					nombreInsertion+=1
+				elif(str(l[i-1])=='or' or str(l[i-1])=='and'):
+					porte.append(str(nombreInsertion-1)+","+l[i+1]+","+l[i+2])
+					nombreInsertion+=1
+					i+=2
 				else:
 					porte.append(l[i]+","+l[i+1]+","+l[i+2])
 					nombreInsertion+=1
@@ -335,6 +339,12 @@ def composition(l):
 					else : 
 						exprPar = 1
 						porte.append(str(nombreInsertion-1-exprPar)+","+l[i]+","+l[i+1])
+					nombreInsertion+=1
+				elif(len(str(l[i-1]))==1):
+					print"fuck"
+					if(str(l[i-2])=='or' or str(l[i-2])=='and'):
+						print"fuck"
+						porte.append(str(nombreInsertion-1)+","+l[i]+","+str(nombreInsertion+1))
 					nombreInsertion+=1
 				elif(len(str(l[i+1]))>1):
 					porte.append(str(nombreInsertion-1)+","+l[i]+","+str(nombreInsertion+1))
@@ -402,7 +412,10 @@ if __name__=="__main__":
 		temps = []
 		#expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
 		#expr = 'a and b or ((a and b) or (c and d))'
-		expr = '(((a and b) and (b and c)) or (b and c)) and b'
+		#expr = '(((a and b) and (b and c)) or (b and c)) and ((a and b) and (b and c))'
+		expr = '(((a and b) and v) or c)'
+		#expr = '(a and v) and c or c and ((a and b) and (b and c))' a gerer les priorités entre parenthèses.
+		#expr = 'a and b and c and d'
 		#expr = '(a and not r) and b'
 		#expr = 'a or b and not b'
 		test = calculValeur(expr)
