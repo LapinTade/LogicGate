@@ -342,12 +342,14 @@ class Plan(QtGui.QGraphicsView):
             expr = txt
         else:
             #expr = "a and b or ((a and b) or (c and d))"
-            expr = "(a and b) or (b and c)"
+            #expr = "(a and b) or (b and c)"
+            expr = "(((a and b) and v) or c)"
             #expr = '((a or r) and (a or b)) and (a or x) or not(x and y)'
         print expr
         exprBool = fonction.decompose(expr)
         entries = fonction.donneEntree(exprBool)
 
+        print fonction.composition(exprBool)
 
         for entry in entries:
             entriesObjects[entry] = Entry(entry, 0, 0, False)
@@ -372,7 +374,7 @@ class Plan(QtGui.QGraphicsView):
             entry = circuit.lstEntries[entries[y]]
             entry.setPos(10,30+x)
             self.scene.addItem(entry)
-            x += 50
+            x += 500 / len(circuit.lstEntries)
 
         #circuit.showGates()
         circuit.posGates()
