@@ -303,11 +303,13 @@ def composition(l):
 	tab=[]
 	i = 0
 	j = 0
-	nombreInsertion=0
+	nombreInsertion = 0
+	exprPar = 0
 	temp = str(l[0])+" "+str(l[1])
 	expr=decompose(str(l[0]))
 	tab.append(l[0])
 	tab.append(temp)
+	print l
 	porte=[]
 	while i<len(l):
 		if(len(str(l[i]))==1):
@@ -326,6 +328,14 @@ def composition(l):
 				if(l[i+1]=='not' and len(str(l[i+2]))==1):
 					porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1]+" "+l[i+2])
 					nombreInsertion+=1
+				elif(len(str(l[i-1]))>3 and (l[i-2]=='and' or l[i-2]=='or')):
+					if(len(str(l[i+1]))>3):
+						exprPar = 1
+						porte.append(str(nombreInsertion-1-exprPar)+","+l[i]+","+str(nombreInsertion+1))
+					else : 
+						exprPar = 1
+						porte.append(str(nombreInsertion-1-exprPar)+","+l[i]+","+l[i+1])
+					nombreInsertion+=1
 				elif(len(str(l[i+1]))>1):
 					porte.append(str(nombreInsertion-1)+","+l[i]+","+str(nombreInsertion+1))
 					nombreInsertion+=1
@@ -343,6 +353,7 @@ def composition(l):
 			None
 	portes=remiseEnForme(porte)
 	return portes
+	
 	
 def remiseEnForme(l):
 	porte=[]
@@ -389,8 +400,9 @@ if __name__=="__main__":
 		
 	if(choix=='2'):
 		temps = []
-		expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
+		#expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
 		#expr = 'a and b or ((a and b) or (c and d))'
+		expr = '(((a and b) and (b and c)) or (b and c)) and b'
 		#expr = '(a and not r) and b'
 		#expr = 'a or b and not b'
 		test = calculValeur(expr)
