@@ -99,6 +99,14 @@ class Gate(QtGui.QGraphicsItem):
         self.entreeA = None
         self.entreeB = None
 
+        self.entreeAX = 0
+        self.entreeAY = 0
+        self.entreeBX = 0
+        self.entreeBY = self.size
+        self.sortieX = self.size+(self.size/2)
+        self.sortieY = self.size/2
+
+
     #def __str__(self):
         #return "entreeA: " + self.entreeA + ", entreeB: " + self.entreeB
 
@@ -123,14 +131,29 @@ class Gate(QtGui.QGraphicsItem):
 
 
     def mousePressEvent(self, event):
-        print "Pressed !"
         self.setValue()
 
+    def getCoordEntreeA(self):
+        return self.scenePos() + QtCore.QPointF(self.entreeAX,self.entreeAY)
+
+    def getCoordEntreeB(self):
+        return self.scenePos() + QtCore.QPointF(self.entreeBX,self.entreeBY)
+
+    def getCoordSortie(self):
+        return self.scenePos() + QtCore.QPointF(self.sortieX,self.sortieY)
+
     def paint(self, painter, option, parent=None):
+        """painter.setPen(QtGui.QColor("black"))
+        painter.drawPoint(QtCore.QPointF(self.entreeAX,self.entreeAY))
+        painter.drawPoint(QtCore.QPointF(self.entreeBX,self.entreeBY))
+        painter.drawPoint(QtCore.QPointF(self.sortieX,self.sortieY))"""
+
         if self.value:
             painter.setPen(QtGui.QColor("green"))
         else:
             painter.setPen(QtGui.QColor("red"))
+
+
 # painter.drawEllipse(QtCore.QRectF(self.size+(self.size/2),(self.size/4),(self.size/2),(self.size/2)))
         """if(self.isSelected()):
             print "\nid(self): %s" % (id(self))
@@ -350,21 +373,48 @@ class Circuit(object):
 
     def drawConnections(self,scene):
         for gate in self.lstGates:
+            # Porte concernée
             gateX = int(self.lstGates[gate].pos().x())
             gateY = int(self.lstGates[gate].pos().y())
 
+            gatePointA = self.lstGates[gate].getCoordEntreeA()
+            gatePointB = self.lstGates[gate].getCoordEntreeB()
+
+            gateAX,gateAY = gatePointA.x(),gatePointA.y()
+            gateBX,gateBY = gatePointB.x(),gatePointB.y()
+
+            # Autres portes/entree
             entryA, entryB = self.lstGates[gate].getEntries()
-            entryAX = int(entryA.pos().x())
+            entryAX = int(entryA.pos().x()+15)
             entryAY = int(entryA.pos().y())
-            entryBX = int(entryB.pos().x())
+            entryBX = int(entryB.pos().x()+15)
             entryBY = int(entryB.pos().y())
+
+            #Cas si ce sont des portes, on redefinit les coord
+            if isinstance(entryA, Gate):
+                entryPointA = entryA.getCoordSortie()
+                entryAX, entryAY = entryPointA.x(),entryPointA.y()
+
+            if isinstance(entryB, Gate):
+                entryPointB = entryB.getCoordSortie() 
+                entryBX, entryBY = entryPointB.x(),entryPointB.y()
+
+            #On inverse les entryA et entryB si B est au dessous de A
+            if entryAY > entryBY:
+                tmpX = entryAX
+                tmpY = entryAY
+                entryAX = entryBX
+                entryAY = entryBY
+                entryBX = tmpX
+                entryBY = tmpY
+
 
             #scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryAX,entryAY))
             #scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryBX,entryBY))
             #con1 = Connexion(gateX,gateY,entryAX,entryAY)
             #con2 = Connexion(gateX,gateY,entryBX,entryBY)
-            self.drawConnexion(scene,gateX,gateY,entryAX,entryAY)
-            self.drawConnexion(scene,gateX,gateY,entryBX,entryBY)
+            self.drawConnexion(scene,gateAX,gateAY,entryAX,entryAY)
+            self.drawConnexion(scene,gateBX,gateBY,entryBX,entryBY)
             #scene.addItem(con1)
             #scene.addItem(con2)
             #print "\nEntryA: %s EntryB: %s" % (entryA.pos(),entryB.pos())
@@ -372,7 +422,6 @@ class Circuit(object):
 
     def drawConnexion(self,scene,x1,y1,x2,y2):
         midX = (x1 + x2) / 2
-        midY = (y1 + y2) / 2
         """
         (x1,y1)___(self.midX,y1)
                         |
@@ -447,7 +496,9 @@ class Plan(QtGui.QGraphicsView):
             expr = txt
         else:
             #expr = "a and b or ((a and b) or (c and d))"
-            expr = "(a and b) or (b and c)"
+            #expr = "(a and b) or (b and c)"
+            #expr = "(a and b) or (c and (a and b))"
+            expr = "(((a and b) or c) and a)"
             #expr = "(((a and b) and v) or c)"
             #expr = '((a or r) and (a or b)) and (a or x) or not(x and y)'
         print expr
