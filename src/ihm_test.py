@@ -277,16 +277,18 @@ class Connexion(QtGui.QGraphicsLineItem):
 
 
 class Circuit(object):
-    def __init__(self, inputGates, inputEntries):
+    def __init__(self, inputGates, inputEntries, plan):
         self.circuit = inputGates
         self.lstGates = {}
-        self.lstEntries = inputEntries
+        self.lstEntries = {}
 
         """self.gates = { "or" : OrGate(0,0),
                         "and" : AndGate(0,0),
                         "xor" : XOrGate(0,0),
                         "not" : NotGate(0,0)}.get(valeur,None)()"""
         x = 0
+
+        #Creation des gates
         for porte in self.circuit:
             #print porte
             porteOne = porte[1]
@@ -300,7 +302,12 @@ class Circuit(object):
             x += 1
             #elif porteOne == "etc..."
 
+        #creation des entries
+        for entry in inputEntries:
+            self.lstEntries[entry] = Entry(entry, 0, 0, False, plan)
 
+
+        # Linkage des entrees
         for x in range(0,len(self.circuit)):
             #print "TYPE1:",type(self.entryCreator(porte[0]))
             #print "TYPE1:",type(self.entryCreator(porte[2]))
@@ -488,7 +495,7 @@ class Plan(QtGui.QGraphicsView):
         self.circuit = None
         self.view = view
 
-    def analyseExpr(self,txt):
+    def analyseExpr(self,txt, nat):
         self.scene.clear()
         entriesObjects = {}
         txt = str(txt)
@@ -498,7 +505,7 @@ class Plan(QtGui.QGraphicsView):
             #expr = "a and b or ((a and b) or (c and d))"
             #expr = "(a and b) or (b and c)"
             #expr = "(a and b) or (c and (a and b))"
-            expr = "(((a and b) or c) and a)"
+            expr = "(((a or b) and c) and a)"
             #expr = "(((a and b) and v) or c)"
             #expr = '((a or r) and (a or b)) and (a or x) or not(x and y)'
         print expr
@@ -507,38 +514,96 @@ class Plan(QtGui.QGraphicsView):
 
         print fonction.composition(exprBool)
 
-        for entry in entries:
-            entriesObjects[entry] = Entry(entry, 0, 0, False, self)
-
-        self.circuit = Circuit(fonction.composition(exprBool), entriesObjects)
+        self.circuit = Circuit(fonction.composition(exprBool), entries, self)
         ggates = self.circuit.getGates()
 
-        ### On set les positions des gates et entries
-        #   Futur migration dans le cricuit.
-        x = 0
-        for y in range(0,len(ggates)):
-            self.gate = ggates[y]
-            self.gate.setPos(50+x,656)
-            self.scene.addItem(self.gate)
-            x += 60
 
-        x = 0
-        for y in range(0,len(self.circuit.lstEntries)):
-            #txt = QtGui.QGraphicsTextItem(entry)
-            #txt.setPos(10,30+x)
-            #self.scene.addItem(txt)
-            entry = self.circuit.lstEntries[entries[y]]
-            entry.setPos(10,30+x)
-            self.scene.addItem(entry)
-            x += 500 / len(self.circuit.lstEntries)
+        if nat == "circuit":
 
-        #self.circuit.showGates()
-        self.circuit.posGates()
-        self.circuit.drawConnections(self.scene)
-        #self.scale(2,2)
+            ### On set les positions des gates et entries
+            #   Futur migration dans le cricuit.
+            x = 0
+            for y in range(0,len(ggates)):
+                gate = ggates[y]
+                gate.setPos(50+x,656)
+                self.scene.addItem(gate)
+                x += 60
 
-        self.circuit.desc()
-        self.setGValues()
+            x = 0
+            for y in range(0,len(self.circuit.lstEntries)):
+                #txt = QtGui.QGraphicsTextItem(entry)
+                #txt.setPos(10,30+x)
+                #self.scene.addItem(txt)
+                entry = self.circuit.lstEntries[entries[y]]
+                entry.setPos(10,30+x)
+                self.scene.addItem(entry)
+                x += 500 / len(self.circuit.lstEntries)
+
+            #self.circuit.showGates()
+            self.circuit.posGates()
+            self.circuit.drawConnections(self.scene)
+            #self.scale(2,2)
+
+            self.circuit.desc()
+            self.setGValues()
+        else:
+            print "hello"
+            self.scene.addItem(QtGui.QGraphicsLineItem(0,0,0,40))
+            
+            x=0
+            for y in range(0,len(self.circuit.lstEntries)):
+                entry = self.circuit.lstEntries[entries[y]]
+                entry.setPos(30+x,10)
+                self.scene.addItem(entry)
+                x += 500 / len(self.circuit.lstEntries)
+                self.scene.addItem(QtGui.QGraphicsLineItem(x,0,x,40))
+
+            self.scene.addItem(QtGui.QGraphicsLineItem(0,40,x,40))
+
+            txt = QtGui.QGraphicsTextItem("Entries")
+            txt.setPos(0,40)
+            self.scene.addItem(txt)
+
+            txt = QtGui.QGraphicsTextItem("And Gates")
+            txt.setPos(20,80)
+            self.scene.addItem(txt)
+
+            txt = QtGui.QGraphicsTextItem("Or Gates")
+            txt.setPos(500,80)
+            self.scene.addItem(txt)
+
+            self.scene.addItem(QtGui.QGraphicsLineItem(0,70,0,300))
+            self.scene.addItem(QtGui.QGraphicsLineItem(400,70,400,300))
+
+            x,y=10,0
+            x2,y2=10,0
+            for k in range(0,len(ggates)-1):
+                gate = ggates[k]
+                if isinstance(gate, AndGate):
+                    gate.setPos(0+x,110 + y)
+                if isinstance(gate, OrGate):
+                    gate.setPos(410+x2,110 + y2)
+
+                self.scene.addItem(gate)
+                x += 40
+                if x > 200:
+                    x = 0
+                    y += 20
+                x2 += 40
+                if x2 > 200:
+                    x2 = 0
+                    y2 += 20
+
+            gate = ggates[len(ggates)-1]
+            gate.setPos(50,400)
+            self.scene.addItem(gate)
+
+            self.scene.addItem(QtGui.QGraphicsRectItem(0,350,150,100))
+
+            txt = QtGui.QGraphicsTextItem("Entries")
+            txt.setPos(0,350)
+            self.scene.addItem(txt)
+
 
     @pyqtSlot()
     def setGValues(self):
@@ -556,6 +621,8 @@ class Plan(QtGui.QGraphicsView):
 
 class Ui_MainWindow(object):
     def setupUi(self, LogicGate):
+        self.nat = "circuit"
+
         LogicGate.setObjectName("LogicGate")
         LogicGate.setMinimumSize(QtCore.QSize(800, 600))
         LogicGate.setMaximumSize(QtCore.QSize(800, 600))
@@ -627,15 +694,17 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(LogicGate)
+        self.actionClose.triggered.connect(QtGui.qApp.quit)
+        QtCore.QObject.connect(self.actionGraphics, QtCore.SIGNAL("triggered()"), lambda n="circuit": self.setNat(n))
+        QtCore.QObject.connect(self.actionTable, QtCore.SIGNAL("triggered()"), lambda n="table": self.setNat(n))
         QtCore.QObject.connect(self.analyse, QtCore.SIGNAL("clicked()"), self.aExpr)
-        QtCore.QObject.connect(self.plan, QtCore.SIGNAL("HELLO"), self.heloo)
         QtCore.QMetaObject.connectSlotsByName(LogicGate)
 
-    def heloo(self):
-        print "helo"
+    def setNat(self, nat):
+        self.nat = nat
 
     def aExpr(self):
-        self.plan.analyseExpr(self.exprBool.text())
+        self.plan.analyseExpr(self.exprBool.text(),self.nat)
 
     def retranslateUi(self, LogicGate):
         LogicGate.setWindowTitle(QtGui.QApplication.translate("LogicGate", "LogicGate", None, QtGui.QApplication.UnicodeUTF8))
@@ -646,7 +715,7 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(QtGui.QApplication.translate("LogicGate", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.menu.setTitle(QtGui.QApplication.translate("LogicGate", "?", None, QtGui.QApplication.UnicodeUTF8))
         self.menuAnalysis.setTitle(QtGui.QApplication.translate("LogicGate", "Analysis", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionOpen.setText(QtGui.QApplication.translate("LogicGate", "Open", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionOpen.setText(QtGui.QApplication.translate("LogicGate", "Open (not implanted yet)", None, QtGui.QApplication.UnicodeUTF8))
         self.actionClose.setText(QtGui.QApplication.translate("LogicGate", "Close", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAbout.setText(QtGui.QApplication.translate("LogicGate", "About", None, QtGui.QApplication.UnicodeUTF8))
         self.actionGraphics.setText(QtGui.QApplication.translate("LogicGate", "Graphics", None, QtGui.QApplication.UnicodeUTF8))
