@@ -305,23 +305,30 @@ def composition(l):
 	j = 0
 	nombreInsertion = 0
 	exprPar = 0
-	temp = str(l[0])+" "+str(l[1])
-	expr=decompose(str(l[0]))
-	tab.append(l[0])
-	tab.append(temp)
 	print l
 	porte=[]
 	while i<len(l):
 		if(len(str(l[i]))==1):
+			print l[i]
 			try :
 				if(l[i+2]=="not"):
-					porte.append(l[i]+","+l[i+1]+","+l[i+2]+" "+l[i+3])
-					nombreInsertion+=1
+					print "lol"
+					#porte.append(l[i]+","+l[i+1]+","+l[i+2]+" "+l[i+3])
+					#nombreInsertion+=1
 				elif(str(l[i-1])=='or' or str(l[i-1])=='and'):
 					porte.append(str(nombreInsertion-1)+","+l[i+1]+","+l[i+2])
 					nombreInsertion+=1
 					i+=2
-				else:
+				elif(l[i-1]=='not'):
+					if(str(l[i-2])=='or' or str(l[i-2])=='and'):
+						porte.append(str(nombreInsertion-1)+","+l[i+1]+","+l[i+2])
+						nombreInsertion+=1
+						i+=2
+					else:
+						porte.append(l[i]+","+l[i+1]+","+l[i+2])
+						nombreInsertion+=1
+						i+=2
+				else :
 					porte.append(l[i]+","+l[i+1]+","+l[i+2])
 					nombreInsertion+=1
 					i+=2
@@ -329,16 +336,21 @@ def composition(l):
 				None
 		if(len(str(l[i]))==2 or len(str(l[i]))==3):
 			if(l[i]=="and" or l[i]=="or"):
-				if(l[i+1]=='not' and len(str(l[i+2]))==1):
-					porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1]+" "+l[i+2])
-					nombreInsertion+=1
-				elif(len(str(l[i-1]))>3 and (l[i-2]=='and' or l[i-2]=='or')):
+				if(len(str(l[i-1]))>3 and (l[i-2]=='and' or l[i-2]=='or')):
 					if(len(str(l[i+1]))>3):
 						exprPar = 1
 						porte.append(str(nombreInsertion-1-exprPar)+","+l[i]+","+str(nombreInsertion+1))
+					elif(l[i+1]=='not' and len(str(l[i+2]))==1):
+						porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1]+" "+l[i+2])
 					else : 
 						exprPar = 1
 						porte.append(str(nombreInsertion-1-exprPar)+","+l[i]+","+l[i+1])
+					nombreInsertion+=1
+				elif(l[i+1]=='not' and len(str(l[i+2]))==1):
+					porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1]+" "+l[i+2])
+					nombreInsertion+=1
+				elif(l[i+1]=='not' and len(str(l[i+2]))>3):
+					porte.append(str(nombreInsertion-1)+","+l[i]+","+l[i+1]+" "+str(nombreInsertion+1))
 					nombreInsertion+=1
 				elif(len(str(l[i-1]))==1):
 					if(str(l[i-2])=='or' or str(l[i-2])=='and'):
@@ -414,8 +426,8 @@ if __name__=="__main__":
 		#expr = '((a or not r) and (a or b)) and (a or not r) or not(x and y)'
 		#expr = 'a and b or ((a and b) or (c and d))'
 		#expr = '(((a and b) and (b and c)) or (b and c)) and ((a and b) and (b and c))'
-		#expr = '(((a and b) and v) or c)'
-		expr = '((a and b) and c) or (k and g)'
+		expr = '(a and b) and ((a and b) and (c and b))'
+		#expr = '(a and not b)'
 		#expr = '(a and v) and c or c and ((a and b) and (b and c))' a gerer les priorités entre parenthèses.
 		#expr = 'a and b and c and d'
 		#expr = '(a and not r) and b'
