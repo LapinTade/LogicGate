@@ -1,15 +1,14 @@
 #-*- coding: utf-8 -*- 
-from PyQt4 import QtCore, QtGui, QtOpenGL
+from PyQt4 import QtCore, QtGui 
+from PyQt4.QtCore import pyqtSignal,pyqtSlot
 import fonction
 import math
 
 import sys, random
 
 #@TODO Faire des fichiers séparé par classe :p
-#   Ajouter class entree (avec valeur bool)
-#   Ajouter le 'linkage' des portes avec les entree ou entres elles
-#   Ajouter le résultat de chaque porte
 #   Ajouter les not entrée et sortie
+#   Rectifier les lignes entrees et sorties
 #   ...
 
 def debug_trace():
@@ -20,15 +19,21 @@ def debug_trace():
   set_trace()
 
 
-class Entry(QtGui.QGraphicsItem):
-    def __init__(self, name, x, y, value,parent=None):
+class Entry(QtGui.QGraphicsObject,QtGui.QGraphicsItem):
+    signal = QtCore.pyqtSignal()
+
+    def __init__(self, name, x, y, value=False, plan=None,parent=None):
         super(Entry, self).__init__(parent)
         self.name = name
         self.x = x
         self.y = y
         self.value = value
 
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
+        self.plan = plan
+
+        #self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
+
+        print self.plan
 
     def __str__(self):
         return str(self.name)
@@ -38,8 +43,9 @@ class Entry(QtGui.QGraphicsItem):
                     self.y = y
                     super(Entry, self).setPos(x,y)"""
 
+
     def boundingRect(self):
-        return QtCore.QRectF(0,0,10,10)
+        return QtCore.QRectF(-10,-10,20,12)
 
     def getValue(self):
         return self.value
@@ -50,22 +56,44 @@ class Entry(QtGui.QGraphicsItem):
     def setValue(self, value):
         self.value = value
 
-    def paint(self, painter, option, parent=None):
-        painter.setPen(QtGui.QColor("black"))
-        painter.drawText(self.x,self.y,self.name)
+    def mousePressEvent(self,event):
+        self.value = not self.value
+        self.plan.setGValues()
+        self.plan.update()
+        print 'X:%s, Y:%s === name: %s | Valeur: %s' % (self.pos().x(), self.pos().y(),self.name, self.value)
 
-        if(self.isSelected()):
-            print 'X:%s, Y:%s === name: %s' % (self.pos().x(), self.pos().y(),self.name)
+    def paint(self, painter, option, parent=None):
+        if self.value:
+            painter.setPen(QtGui.QColor("green"))
+        else:
+            painter.setPen(QtGui.QColor("red"))
+        painter.drawText(self.x,self.y,self.name)
+        painter.drawRect(self.boundingRect())
+
+        """if(self.isSelected()):
+            print 'X:%s, Y:%s === name: %s | Valeur: %s' % (self.pos().x(), self.pos().y(),self.name, self.value)
+            self.value = not self.value
+            print "#", self.plan
+            self.plan.setGValues()
+            #self.plan.update()
+            self.setSelected(False)
+            #self.plan.getView().update()
+            #self.signal.connect(self.plan.setGValues)
+            #self.signal.emit()"""
+            
+
 
 class Gate(QtGui.QGraphicsItem):
-    def __init__(self, x, y, size=20, scale=1, parent=None):
+    def __init__(self, x, y, value=None, size=20, scale=1, parent=None):
         super(Gate, self).__init__(parent)
         self.size = size
         self.scale = scale
 
+        self.value = value
+
         self.setPos(x,y)
 
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+        #self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
 
         self.entreeA = None
@@ -75,16 +103,42 @@ class Gate(QtGui.QGraphicsItem):
         #return "entreeA: " + self.entreeA + ", entreeB: " + self.entreeB
 
 
+    def getValue(self):
+        if self.value is None:
+            if self.entreeA is None or self.entreeB is None:
+                return None
+            else:
+                if isinstance(self.entreeA, Gate):
+                    self.entreeA.getValue()
+                if isinstance(self.entreeB, Gate):
+                    self.entreeB.getValue()
+
+                self.setValue()
+                return self.value
+        else:
+            return self.value
+
     def boundingRect(self):
         return QtCore.QRectF(0,0,self.size*2,self.size+(self.size/2))
 
+
+    def mousePressEvent(self, event):
+        print "Pressed !"
+        self.setValue()
+
     def paint(self, painter, option, parent=None):
-        painter.setPen(QtGui.QColor("black"))
+        if self.value:
+            painter.setPen(QtGui.QColor("green"))
+        else:
+            painter.setPen(QtGui.QColor("red"))
 # painter.drawEllipse(QtCore.QRectF(self.size+(self.size/2),(self.size/4),(self.size/2),(self.size/2)))
-        if(self.isSelected()):
+        """if(self.isSelected()):
             print "\nid(self): %s" % (id(self))
             print "X:%s, Y:%s === entreeA: %s, entreeB: %s" % (self.pos().x(), self.pos().y(), type(self.entreeA), type(self.entreeB))
-            print "Add entreeA: %s, Add entreeB: %s" % (id(self.entreeA), id(self.entreeB))
+            print "entreeA: %s, Add entreeB: %s" % (id(self.entreeA), id(self.entreeB))
+            print self.value
+            self.setValue()
+            print "Updated"""
 
     def setEntries(self, entreeA, entreeB):
         self.entreeA, self.entreeB = entreeA, entreeB
@@ -109,6 +163,13 @@ class AndGate(Gate):
         painter.drawText(self.size/2,(self.size/2)+(self.size/8),"&")
         painter.drawArc(QtCore.QRectF(self.size/2,0,self.size,self.size),90*16,-180*16)
 
+    def setValue(self):
+        #Cas erreur
+        if self.entreeA is None or self.entreeB is None:
+            pass
+        else:
+            self.value = self.entreeA.getValue() and self.entreeB.getValue()
+
 
 class OrGate(Gate):
     def __init__(self,*args,**kwargs):
@@ -126,6 +187,12 @@ class OrGate(Gate):
         painter.drawArc(QtCore.QRectF(0,0,self.size*2,self.size*2),90*16,-60*16)
         painter.drawArc(QtCore.QRectF(0,-self.size,self.size*2,self.size*2),-90*16,60*16)
 
+    def setValue(self):
+        #Cas erreur
+        if self.entreeA is None or self.entreeB is None:
+            pass
+        else:
+            self.value = self.entreeA.getValue() or self.entreeB.getValue()
 
 class XOrGate(Gate):
     def __init__(self,*args,**kwargs):
@@ -169,6 +236,7 @@ class Connexion(QtGui.QGraphicsLineItem):
         self.y2 = y2
         self.midX = (x1 + x2) / 2
         self.midY = (y1 + y2) / 2
+
 
     def paint(self, painter, option, parent=None):
         """
@@ -223,6 +291,7 @@ class Circuit(object):
 
         x = 50
         shift = 60
+        entryShift = 10
 
         for k in range(0,len(self.lstGates)): 
             for gate in self.lstGates:
@@ -234,6 +303,7 @@ class Circuit(object):
                     if isinstance(entreeA, Entry) and isinstance(entreeB, Entry):
                         self.lstGates[gate].setX(x)
                         notPosedGate[gate] = False
+                        x += entryShift
 
                     #Cas A est une porte et B non
                     if isinstance(entreeA, Gate) and isinstance(entreeB, Entry):
@@ -278,7 +348,7 @@ class Circuit(object):
                     #print "D",self.lstGates[gate].pos(),"\n"
 
 
-    def drawConnection(self,scene):
+    def drawConnections(self,scene):
         for gate in self.lstGates:
             gateX = int(self.lstGates[gate].pos().x())
             gateY = int(self.lstGates[gate].pos().y())
@@ -291,13 +361,41 @@ class Circuit(object):
 
             #scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryAX,entryAY))
             #scene.addItem(QtGui.QGraphicsLineItem(gateX,gateY,entryBX,entryBY))
-            con1 = Connexion(gateX,gateY,entryAX,entryAY)
-            con2 = Connexion(gateX,gateY,entryBX,entryBY)
-            scene.addItem(con1)
-            scene.addItem(con2)
+            #con1 = Connexion(gateX,gateY,entryAX,entryAY)
+            #con2 = Connexion(gateX,gateY,entryBX,entryBY)
+            self.drawConnexion(scene,gateX,gateY,entryAX,entryAY)
+            self.drawConnexion(scene,gateX,gateY,entryBX,entryBY)
+            #scene.addItem(con1)
+            #scene.addItem(con2)
             #print "\nEntryA: %s EntryB: %s" % (entryA.pos(),entryB.pos())
             #print "A( %s, %s); B( %s, %s)" % (entryAX,entryAY, entryBX,entryBY)
-        
+
+    def drawConnexion(self,scene,x1,y1,x2,y2):
+        midX = (x1 + x2) / 2
+        midY = (y1 + y2) / 2
+        """
+        (x1,y1)___(self.midX,y1)
+                        |
+                        |
+                        |
+                  (self.midX,y2) ____ (x2,y2)
+        """
+        scene.addItem(QtGui.QGraphicsLineItem(x1,y1,midX,y1))
+        scene.addItem(QtGui.QGraphicsLineItem(midX,y1,midX,y2))
+        scene.addItem(QtGui.QGraphicsLineItem(midX,y2,x2,y2))
+
+    def desc(self):
+        print "\nGates Values:"
+        gates = self.lstGates
+        for gate in gates:
+            print gates[gate].getValue()
+
+        print "\nEntries Value:"
+        entries = self.lstEntries
+        for entry in entries:
+            print entries[entry].getValue()
+
+
     def showGates(self):
         for porte in self.circuit:
             print porte[1]
@@ -307,6 +405,9 @@ class Circuit(object):
 
     def getGates(self):
         return self.lstGates
+
+    def getEntries(self):
+        return self.lstEntries
 
     def showGates(self):
         print self.lstGates
@@ -322,10 +423,11 @@ class Circuit(object):
 
 
 class Plan(QtGui.QGraphicsView):
-    def __init__(self, parent=None):
+    def __init__(self, view, parent=None,):
         super(Plan, self).__init__(parent)
         self.setStyleSheet("background-color:white;")
         self.setAutoFillBackground(True)
+        self.setViewportUpdateMode(QtGui.QGraphicsView.SmartViewportUpdate)
 
         self.setRenderHint(QtGui.QPainter.Antialiasing)
 
@@ -334,16 +436,19 @@ class Plan(QtGui.QGraphicsView):
         self.setScene(self.scene)
         self.scene.setSceneRect(0,0,780,500)
 
+        self.circuit = None
+        self.view = view
 
     def analyseExpr(self,txt):
         self.scene.clear()
         entriesObjects = {}
+        txt = str(txt)
         if txt != "":
             expr = txt
         else:
             #expr = "a and b or ((a and b) or (c and d))"
-            #expr = "(a and b) or (b and c)"
-            expr = "(((a and b) and v) or c)"
+            expr = "(a and b) or (b and c)"
+            #expr = "(((a and b) and v) or c)"
             #expr = '((a or r) and (a or b)) and (a or x) or not(x and y)'
         print expr
         exprBool = fonction.decompose(expr)
@@ -352,10 +457,10 @@ class Plan(QtGui.QGraphicsView):
         print fonction.composition(exprBool)
 
         for entry in entries:
-            entriesObjects[entry] = Entry(entry, 0, 0, False)
+            entriesObjects[entry] = Entry(entry, 0, 0, False, self)
 
-        circuit = Circuit(fonction.composition(exprBool), entriesObjects)
-        ggates = circuit.getGates()
+        self.circuit = Circuit(fonction.composition(exprBool), entriesObjects)
+        ggates = self.circuit.getGates()
 
         ### On set les positions des gates et entries
         #   Futur migration dans le cricuit.
@@ -367,20 +472,35 @@ class Plan(QtGui.QGraphicsView):
             x += 60
 
         x = 0
-        for y in range(0,len(circuit.lstEntries)):
+        for y in range(0,len(self.circuit.lstEntries)):
             #txt = QtGui.QGraphicsTextItem(entry)
             #txt.setPos(10,30+x)
             #self.scene.addItem(txt)
-            entry = circuit.lstEntries[entries[y]]
+            entry = self.circuit.lstEntries[entries[y]]
             entry.setPos(10,30+x)
             self.scene.addItem(entry)
-            x += 500 / len(circuit.lstEntries)
+            x += 500 / len(self.circuit.lstEntries)
 
-        #circuit.showGates()
-        circuit.posGates()
-        circuit.drawConnection(self.scene)
+        #self.circuit.showGates()
+        self.circuit.posGates()
+        self.circuit.drawConnections(self.scene)
         #self.scale(2,2)
-        self.show()
+
+        self.circuit.desc()
+        self.setGValues()
+
+    @pyqtSlot()
+    def setGValues(self):
+        gates = self.circuit.getGates()
+        for gate in gates:
+            gates[gate].setValue()
+            
+        for gate in gates:
+            gates[gate].setValue()
+        self.circuit.desc()
+
+    def getView(self):
+        return self.view
 
 
 class Ui_MainWindow(object):
@@ -404,10 +524,11 @@ class Ui_MainWindow(object):
         self.exprBool.setGeometry(QtCore.QRect(0, 522, 400, 30))
         self.exprBool.setObjectName("exprBool")
 
-        self.plan = Plan(self.centralwidget)
+        self.plan = Plan(LogicGate, self.centralwidget)
         self.plan.setFixedSize(800,520)        
         #self.plan.setGeometry(QtCore.QRect(0, 0, 780, 500))
         self.plan.setObjectName("plan")
+        print "###",self.plan
 
         LogicGate.setCentralWidget(self.centralwidget)
 
@@ -456,7 +577,11 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(LogicGate)
         QtCore.QObject.connect(self.analyse, QtCore.SIGNAL("clicked()"), self.aExpr)
+        QtCore.QObject.connect(self.plan, QtCore.SIGNAL("HELLO"), self.heloo)
         QtCore.QMetaObject.connectSlotsByName(LogicGate)
+
+    def heloo(self):
+        print "helo"
 
     def aExpr(self):
         self.plan.analyseExpr(self.exprBool.text())
