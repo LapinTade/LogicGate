@@ -19,8 +19,47 @@ def debug_trace():
   set_trace()
 
 
+class Out(QtGui.QGraphicsObject,QtGui.QGraphicsItem):
+    def __init__(self, name, x, y, value=False, plan=None, lastGate=None, parent=None):
+        super(Out, self).__init__(parent)
+        self.name = name
+        self.x = x
+        self.y = y
+        self.value = value
+
+        self.lastGate = lastGate
+
+        self.plan = plan
+
+    def boundingRect(self):
+        return QtCore.QRectF(-10,-10,40,12)
+
+    def getValue(self):
+        return self.value
+
+    def getName(self):
+        return self.name
+
+    def setValue(self):
+        self.value = self.lastGate.getValue()
+
+    def mousePressEvent(self,event):
+        self.plan.setGValues()
+        self.plan.update()
+        print 'X:%s, Y:%s === name: %s | Valeur: %s' % (self.pos().x(), self.pos().y(),self.name, self.value)
+
+    def paint(self, painter, option, parent=None):
+        if self.value:
+            painter.setPen(QtGui.QColor("green"))
+        else:
+            painter.setPen(QtGui.QColor("red"))
+        painter.drawText(self.x,self.y,self.name)
+        painter.drawRect(self.boundingRect())
+
+
+
 class Entry(QtGui.QGraphicsObject,QtGui.QGraphicsItem):
-    signal = QtCore.pyqtSignal()
+    #signal = QtCore.pyqtSignal()
 
     def __init__(self, name, x, y, value=False, plan=None,parent=None):
         super(Entry, self).__init__(parent)
@@ -32,8 +71,6 @@ class Entry(QtGui.QGraphicsObject,QtGui.QGraphicsItem):
         self.plan = plan
 
         #self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
-
-        print self.plan
 
     def __str__(self):
         return str(self.name)
@@ -313,7 +350,10 @@ class Circuit(object):
             #print "TYPE1:",type(self.entryCreator(porte[2]))
             self.lstGates[x].setEntries(self.entryCreator(self.circuit[x][0]),self.entryCreator(self.circuit[x][2]))
 
-    def posGates(self):
+        self.lastGate = self.lstGates[len(self.lstGates)-1]
+        self.out = Out("Exit",0,0,False, plan, self.lastGate)
+
+    def posGates(self,scene):
         notPosedGate = []
                         
         for k in range(0,len(self.lstGates)):
@@ -376,7 +416,21 @@ class Circuit(object):
                     #print "C",self.lstGates[gate].pos()
                     self.lstGates[gate].setY(math.fabs(entreeA.pos().y() + entreeB.pos().y())/2)
                     #print "D",self.lstGates[gate].pos(),"\n"
+        
 
+        yMin,yMax = 2000,0
+        for index in self.lstEntries:
+            entry = self.lstEntries[index]
+            entryY = entry.pos().y()
+            if entryY > yMax:
+                yMax = entryY
+            if entryY < yMin:
+                yMin = entryY
+        
+        self.out.setX(self.lastGate.pos().x()+shift)
+        self.out.setY(math.fabs(yMax + yMin)/2)
+
+        scene.addItem(self.out)
 
     def drawConnections(self,scene):
         for gate in self.lstGates:
@@ -426,6 +480,8 @@ class Circuit(object):
             #scene.addItem(con2)
             #print "\nEntryA: %s EntryB: %s" % (entryA.pos(),entryB.pos())
             #print "A( %s, %s); B( %s, %s)" % (entryAX,entryAY, entryBX,entryBY)
+        xLast, yLast = self.lastGate.getCoordSortie().x(),self.lastGate.getCoordSortie().y()
+        self.drawConnexion(scene,self.out.pos().x(),self.out.pos().y(), xLast, yLast)
 
     def drawConnexion(self,scene,x1,y1,x2,y2):
         midX = (x1 + x2) / 2
@@ -467,6 +523,9 @@ class Circuit(object):
 
     def showGates(self):
         print self.lstGates
+
+    def getOut(self):
+        return self.out
 
     def entryCreator(self, entry):
         if "not" in entry:
@@ -540,7 +599,7 @@ class Plan(QtGui.QGraphicsView):
                 x += 500 / len(self.circuit.lstEntries)
 
             #self.circuit.showGates()
-            self.circuit.posGates()
+            self.circuit.posGates(self.scene)
             self.circuit.drawConnections(self.scene)
             #self.scale(2,2)
 
@@ -577,7 +636,7 @@ class Plan(QtGui.QGraphicsView):
 
             x,y=10,0
             x2,y2=10,0
-            for k in range(0,len(ggates)-1):
+            for k in range(0,len(ggates)):
                 gate = ggates[k]
                 if isinstance(gate, AndGate):
                     gate.setPos(0+x,110 + y)
@@ -594,9 +653,9 @@ class Plan(QtGui.QGraphicsView):
                     x2 = 0
                     y2 += 20
 
-            gate = ggates[len(ggates)-1]
-            gate.setPos(50,400)
-            self.scene.addItem(gate)
+            out = self.circuit.getOut()
+            out.setPos(50,400)
+            self.scene.addItem(out)
 
             self.scene.addItem(QtGui.QGraphicsRectItem(0,350,150,100))
 
@@ -614,6 +673,9 @@ class Plan(QtGui.QGraphicsView):
         for gate in gates:
             gates[gate].setValue()
         self.circuit.desc()
+
+        out = self.circuit.getOut()
+        out.setValue()
 
     def getView(self):
         return self.view
