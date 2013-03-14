@@ -121,7 +121,7 @@ class Entry(QtGui.QGraphicsObject,QtGui.QGraphicsItem):
 
 
 class Gate(QtGui.QGraphicsItem):
-    def __init__(self, x, y, value=None, size=20, scale=1, parent=None):
+    def __init__(self, x, y, value=False, size=20, scale=1, parent=None):
         super(Gate, self).__init__(parent)
         self.size = size
         self.scale = scale
@@ -138,10 +138,14 @@ class Gate(QtGui.QGraphicsItem):
 
         self.entreeAX = 0
         self.entreeAY = 0
+
         self.entreeBX = 0
         self.entreeBY = self.size
+
         self.sortieX = self.size+(self.size/2)
         self.sortieY = self.size/2
+
+        self.entryIsNot = [False,False]
 
 
     #def __str__(self):
@@ -166,6 +170,11 @@ class Gate(QtGui.QGraphicsItem):
     def boundingRect(self):
         return QtCore.QRectF(0,0,self.size*2,self.size+(self.size/2))
 
+    def setEntryIsNot(self,index):
+        self.entryIsNot[index] = True
+
+    def getEntryIsNot(self):
+        return self.entryIsNot
 
     def mousePressEvent(self, event):
         self.setValue()
@@ -223,12 +232,20 @@ class AndGate(Gate):
         painter.drawText(self.size/2,(self.size/2)+(self.size/8),"&")
         painter.drawArc(QtCore.QRectF(self.size/2,0,self.size,self.size),90*16,-180*16)
 
+
     def setValue(self):
         #Cas erreur
         if self.entreeA is None or self.entreeB is None:
             pass
         else:
-            self.value = self.entreeA.getValue() and self.entreeB.getValue()
+            retA = self.entreeA.getValue()
+            retB = self.entreeB.getValue()
+            if self.entryIsNot[0]:
+                retA = not retA
+            if self.entryIsNot[1]:
+                retB = not retB
+
+            self.value = retA and retB
 
 
 class OrGate(Gate):
@@ -252,7 +269,14 @@ class OrGate(Gate):
         if self.entreeA is None or self.entreeB is None:
             pass
         else:
-            self.value = self.entreeA.getValue() or self.entreeB.getValue()
+            retA = self.entreeA.getValue()
+            retB = self.entreeB.getValue()
+            if self.entryIsNot[0]:
+                retA = not retA
+            if self.entryIsNot[1]:
+                retB = not retB
+
+            self.value = retA or retB
 
 class XOrGate(Gate):
     def __init__(self,*args,**kwargs):
@@ -281,7 +305,10 @@ class NotGate(Gate):
  
     def paint(self, painter, option, parent=None):
         super(NotGate, self).paint(painter,option)
-        painter.drawText(0,(self.size/2)+(self.size/5),"1")
+        painter.setPen(QtGui.QColor("white"))
+        painter.drawLine(0,self.size/2,self.size,self.size/2)
+        painter.setPen(QtGui.QColor("black"))
+        #painter.drawText(0,(self.size/2)+(self.size/5),"1")
         painter.drawLine(0,0,0,self.size)
         painter.drawLine(0,0,self.size,self.size/2)
         painter.drawLine(0,self.size,self.size,self.size/2)
@@ -326,6 +353,7 @@ class Circuit(object):
         x = 0
 
         #Creation des gates
+        print self.circuit
         for porte in self.circuit:
             #print porte
             porteOne = porte[1]
@@ -348,7 +376,8 @@ class Circuit(object):
         for x in range(0,len(self.circuit)):
             #print "TYPE1:",type(self.entryCreator(porte[0]))
             #print "TYPE1:",type(self.entryCreator(porte[2]))
-            self.lstGates[x].setEntries(self.entryCreator(self.circuit[x][0]),self.entryCreator(self.circuit[x][2]))
+            gate = self.lstGates[x]
+            gate.setEntries(self.entryCreator(self.circuit[x][0],gate,0),self.entryCreator(self.circuit[x][2],gate,1))
 
         self.lastGate = self.lstGates[len(self.lstGates)-1]
         self.out = Out("Exit",0,0,False, plan, self.lastGate)
@@ -361,13 +390,16 @@ class Circuit(object):
 
         x = 50
         shift = 60
-        entryShift = 10
+        entryShift = 15
+
+        print "PLACING"
 
         for k in range(0,len(self.lstGates)): 
             for gate in self.lstGates:
                 if notPosedGate[gate]:
                     #debug_trace()
                     #print "\n>k:",k," => ",id(self.lstGates[gate])
+
                     entreeA, entreeB = self.lstGates[gate].getEntries()
                     #print id(entreeA),id(entreeB),"<"
                     if isinstance(entreeA, Entry) and isinstance(entreeB, Entry):
@@ -480,6 +512,15 @@ class Circuit(object):
             #scene.addItem(con2)
             #print "\nEntryA: %s EntryB: %s" % (entryA.pos(),entryB.pos())
             #print "A( %s, %s); B( %s, %s)" % (entryAX,entryAY, entryBX,entryBY)
+            print self.lstGates[gate].getEntryIsNot()
+            if self.lstGates[gate].getEntryIsNot()[0]:
+                notG = NotGate(gateAX-15,gateAY-5,False,10)
+                scene.addItem(notG)
+            if self.lstGates[gate].getEntryIsNot()[1]:
+                notG = NotGate(gateBX-15,gateBY-5,False,10)
+                scene.addItem(notG)
+
+
         xLast, yLast = self.lastGate.getCoordSortie().x(),self.lastGate.getCoordSortie().y()
         self.drawConnexion(scene,self.out.pos().x(),self.out.pos().y(), xLast, yLast)
 
@@ -527,9 +568,11 @@ class Circuit(object):
     def getOut(self):
         return self.out
 
-    def entryCreator(self, entry):
+    def entryCreator(self, entry, gate, index):
         if "not" in entry:
-            return
+            print "\nNOT ENTRY", entry,"gate", gate,"index" ,index,"\n"
+            gate.setEntryIsNot(index)
+            return self.lstEntries[entry[4:]]
         try:
             entry = int(entry)
             return self.lstGates[entry]
