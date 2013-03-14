@@ -121,7 +121,7 @@ class Entry(QtGui.QGraphicsObject,QtGui.QGraphicsItem):
 
 
 class Gate(QtGui.QGraphicsItem):
-    def __init__(self, x, y, value=False, size=20, scale=1, parent=None):
+    def __init__(self, x, y, value=False,size=20, scale=1, parent=None):
         super(Gate, self).__init__(parent)
         self.size = size
         self.scale = scale
@@ -146,6 +146,7 @@ class Gate(QtGui.QGraphicsItem):
         self.sortieY = self.size/2
 
         self.entryIsNot = [False,False]
+        self.gateNot = False
 
 
     #def __str__(self):
@@ -163,15 +164,27 @@ class Gate(QtGui.QGraphicsItem):
                     self.entreeB.getValue()
 
                 self.setValue()
-                return self.value
+                if self.gateNot:
+                    return not self.value
+                else:
+                    return self.value
         else:
-            return self.value
+            if self.gateNot:
+                return not self.value
+            else:
+                return self.value
 
     def boundingRect(self):
         return QtCore.QRectF(0,0,self.size*2,self.size+(self.size/2))
 
     def setEntryIsNot(self,index):
         self.entryIsNot[index] = True
+
+    def setGateNot(self):
+        self.gateNot = True
+
+    def getGateNot(self):
+        return self.gateNot
 
     def getEntryIsNot(self):
         return self.entryIsNot
@@ -512,13 +525,17 @@ class Circuit(object):
             #scene.addItem(con2)
             #print "\nEntryA: %s EntryB: %s" % (entryA.pos(),entryB.pos())
             #print "A( %s, %s); B( %s, %s)" % (entryAX,entryAY, entryBX,entryBY)
-            print self.lstGates[gate].getEntryIsNot()
             if self.lstGates[gate].getEntryIsNot()[0]:
                 notG = NotGate(gateAX-15,gateAY-5,False,10)
                 scene.addItem(notG)
             if self.lstGates[gate].getEntryIsNot()[1]:
                 notG = NotGate(gateBX-15,gateBY-5,False,10)
                 scene.addItem(notG)
+            if self.lstGates[gate].getGateNot():
+                #@TODO
+                #   Bouger ce putain de cercle ;)
+                #   Definir quand une porte est gateNot
+                scene.addItem(QtGui.QGraphicsEllipseItem(QtGui.QRectF(gateAX,gateAY,5,5)))
 
 
         xLast, yLast = self.lastGate.getCoordSortie().x(),self.lastGate.getCoordSortie().y()
