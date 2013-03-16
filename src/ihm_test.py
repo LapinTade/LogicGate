@@ -475,7 +475,7 @@ class Circuit(object):
         self.out.setX(self.lastGate.pos().x()+shift)
         self.out.setY(math.fabs(yMax + yMin)/2)
 
-        scene.addItem(self.out)
+        #scene.addItem(self.out)
 
     def drawConnections(self,scene):
         for gate in self.lstGates:
@@ -538,8 +538,8 @@ class Circuit(object):
                 scene.addItem(QtGui.QGraphicsEllipseItem(QtGui.QRectF(gateAX,gateAY,5,5)))
 
 
-        xLast, yLast = self.lastGate.getCoordSortie().x(),self.lastGate.getCoordSortie().y()
-        self.drawConnexion(scene,self.out.pos().x(),self.out.pos().y(), xLast, yLast)
+        #xLast, yLast = self.lastGate.getCoordSortie().x(),self.lastGate.getCoordSortie().y()
+        #self.drawConnexion(scene,self.out.pos().x(),self.out.pos().y(), xLast, yLast)
 
     def drawConnexion(self,scene,x1,y1,x2,y2):
         midX = (x1 + x2) / 2
@@ -628,12 +628,26 @@ class Plan(QtGui.QGraphicsView):
             #expr = "(((a and b) and v) or c)"
             #expr = '((a or r) and (a or b)) and (a or x) or not(x and y)'
         print expr
+        porte=[]
         exprBool = fonction.decompose(expr)
         entries = fonction.donneEntree(exprBool)
+        testCh = fonction.addapt(str(fonction.calculValeur(expr)))
+        testP = fonction.compteParent(expr,0)
+        if(testP == 0) :
+            self.circuit = Circuit(fonction.composition(exprBool), entries, self)               
+        else :
+            print "quoi"
+            porte=fonction.testNewCompose(exprBool, expr)
+            for j in range(0, len(porte)):
+                try:
+                    porte[j] = porte[j].split(',')
+                except Exception:
+                    None
+            print porte
+            self.circuit = Circuit(porte,entries,self)
+        #print fonction.composition(exprBool)
 
-        print fonction.composition(exprBool)
-
-        self.circuit = Circuit(fonction.composition(exprBool), entries, self)
+        #self.circuit = Circuit(fonction.composition(exprBool), entries, self)
         ggates = self.circuit.getGates()
 
 
